@@ -1,9 +1,12 @@
+import express from "express"
 import { PrismaClient } from "@prisma/client"
 import { Telegraf } from "telegraf"
 import "dotenv/config"
 
-export const prisma = new PrismaClient()
-export const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
+const port = process.env.PORT || 5000
+const app = express()
+const prisma = new PrismaClient()
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
 
 bot.start(async ctx => {
 	let chat = await bot.telegram.getChat(ctx.chat.id)
@@ -30,3 +33,11 @@ bot.launch()
 
 process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))
+
+app.get("/", (req, res) => {
+	res.send("Hello World!")
+})
+
+app.listen(port, () => {
+	console.log(`App listening on port ${port}`)
+})
