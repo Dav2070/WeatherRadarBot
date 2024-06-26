@@ -12,6 +12,7 @@
 	},
 	"license": "MIT",
 	"dependencies": {
+		"@prisma/client": "^5.16.0",
 		"telegraf": "^4.16.3",
 		"typescript": "^5.5.2"
 	},
@@ -19,6 +20,7 @@
 		"@types/node": "^20.14.9",
 		"concurrently": "^8.2.2",
 		"dotenv": "^16.4.5",
-		"nodemon": "^3.1.4"
+		"nodemon": "^3.1.4",
+		"prisma": "^5.16.0"
 	}
 }
