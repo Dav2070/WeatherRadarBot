@@ -7,6 +7,9 @@ const port = process.env.PORT || 5000
 const app = express()
 const prisma = new PrismaClient()
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
+const weatherRadarBot = await prisma.bot.findFirst({
+	where: { name: "weatherradarbot" }
+})
 
 bot.start(async ctx => {
 	let chat = await bot.telegram.getChat(ctx.chat.id)
@@ -23,6 +26,7 @@ bot.start(async ctx => {
 		// Create a new user
 		await prisma.user.create({
 			data: {
+				botId: weatherRadarBot.id,
 				chatId: chat.id
 			}
 		})

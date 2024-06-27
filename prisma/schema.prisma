@@ -7,7 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Bot {
+  id    BigInt @id @default(autoincrement())
+  name  String @unique @db.VarChar
+  users User[]
+}
+
 model User {
   id     BigInt @id @default(autoincrement())
+  botId  BigInt
   chatId BigInt @unique
+  bot    Bot    @relation(fields: [botId], references: [id])
 }
