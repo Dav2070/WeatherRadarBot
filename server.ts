@@ -21,7 +21,12 @@ weatherRadarTelegraf.start(async ctx => {
 	ctx.reply(startMessage.replace("{0}", chat.first_name))
 
 	// Check if the user is already in the database
-	let user = await prisma.user.findFirst({ where: { chatId: chat.id } })
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: weatherRadarBot.id,
+			chatId: chat.id
+		}
+	})
 
 	if (user == null) {
 		// Create a new user
@@ -41,7 +46,9 @@ process.once("SIGTERM", () => weatherRadarTelegraf.stop("SIGTERM"))
 //#endregion
 
 //#region AmazonSearchBot
-const amazonSearchTelegraf = new Telegraf(process.env.AMAZON_QUICK_SEARCH_BOT_TOKEN)
+const amazonSearchTelegraf = new Telegraf(
+	process.env.AMAZON_QUICK_SEARCH_BOT_TOKEN
+)
 const amazonSearchBot = await prisma.bot.findFirst({
 	where: { name: "amazonquicksearchbot" }
 })
@@ -53,7 +60,12 @@ amazonSearchTelegraf.start(async ctx => {
 	ctx.reply(startMessage.replace("{0}", chat.first_name))
 
 	// Check if the user is already in the database
-	let user = await prisma.user.findFirst({ where: { chatId: chat.id } })
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: amazonSearchBot.id,
+			chatId: chat.id
+		}
+	})
 
 	if (user == null) {
 		// Create a new user

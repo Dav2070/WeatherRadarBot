@@ -16,6 +16,6 @@ model Bot {
 model User {
   id     BigInt @id @default(autoincrement())
   botId  BigInt
-  chatId BigInt @unique
+  chatId BigInt
   bot    Bot    @relation(fields: [botId], references: [id])
 }
