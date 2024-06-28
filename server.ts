@@ -84,6 +84,45 @@ process.once("SIGINT", () => amazonSearchTelegraf.stop("SIGINT"))
 process.once("SIGTERM", () => amazonSearchTelegraf.stop("SIGTERM"))
 //#endregion
 
+//#region WriteForMeBot
+const writeForMeTelegraf = new Telegraf(
+	process.env.WRITE_FOR_ME_BOT_TOKEN
+)
+const writeForMeBot = await prisma.bot.findFirst({
+	where: { name: "writeforme_writer_bot" }
+})
+
+writeForMeTelegraf.start(async ctx => {
+	let chat = await writeForMeTelegraf.telegram.getChat(ctx.chat.id)
+	if (chat.type != "private") return
+
+	ctx.reply(startMessage.replace("{0}", chat.first_name))
+
+	// Check if the user is already in the database
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: writeForMeBot.id,
+			chatId: chat.id
+		}
+	})
+
+	if (user == null) {
+		// Create a new user
+		await prisma.user.create({
+			data: {
+				botId: writeForMeBot.id,
+				chatId: chat.id
+			}
+		})
+	}
+})
+
+writeForMeTelegraf.launch()
+
+process.once("SIGINT", () => writeForMeTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => writeForMeTelegraf.stop("SIGTERM"))
+//#endregion
+
 //#region Express server
 app.get("/", (req, res) => {
 	res.send("Hello World!")
