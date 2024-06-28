@@ -123,6 +123,45 @@ process.once("SIGINT", () => writeForMeTelegraf.stop("SIGINT"))
 process.once("SIGTERM", () => writeForMeTelegraf.stop("SIGTERM"))
 //#endregion
 
+//#region CanvaBot
+const canvaTelegraf = new Telegraf(
+	process.env.CANVA_BOT_TOKEN
+)
+const canvaBot = await prisma.bot.findFirst({
+	where: { name: "canva_design_bot" }
+})
+
+canvaTelegraf.start(async ctx => {
+	let chat = await canvaTelegraf.telegram.getChat(ctx.chat.id)
+	if (chat.type != "private") return
+
+	ctx.reply(startMessage.replace("{0}", chat.first_name))
+
+	// Check if the user is already in the database
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: canvaBot.id,
+			chatId: chat.id
+		}
+	})
+
+	if (user == null) {
+		// Create a new user
+		await prisma.user.create({
+			data: {
+				botId: canvaBot.id,
+				chatId: chat.id
+			}
+		})
+	}
+})
+
+canvaTelegraf.launch()
+
+process.once("SIGINT", () => canvaTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => canvaTelegraf.stop("SIGTERM"))
+//#endregion
+
 //#region Express server
 app.get("/", (req, res) => {
 	res.send("Hello World!")
