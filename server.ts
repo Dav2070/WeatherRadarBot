@@ -6,13 +6,15 @@ import "dotenv/config"
 const port = process.env.PORT || 5000
 const app = express()
 const prisma = new PrismaClient()
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
+
+//#region WeatherRadarBot
+const weatherRadarTelegraf = new Telegraf(process.env.WEATHER_RADAR_BOT_TOKEN)
 const weatherRadarBot = await prisma.bot.findFirst({
 	where: { name: "weatherradarbot" }
 })
 
-bot.start(async ctx => {
-	let chat = await bot.telegram.getChat(ctx.chat.id)
+weatherRadarTelegraf.start(async ctx => {
+	let chat = await weatherRadarTelegraf.telegram.getChat(ctx.chat.id)
 	if (chat.type != "private") return
 
 	ctx.reply(
@@ -33,11 +35,13 @@ bot.start(async ctx => {
 	}
 })
 
-bot.launch()
+weatherRadarTelegraf.launch()
 
-process.once("SIGINT", () => bot.stop("SIGINT"))
-process.once("SIGTERM", () => bot.stop("SIGTERM"))
+process.once("SIGINT", () => weatherRadarTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => weatherRadarTelegraf.stop("SIGTERM"))
+//#endregion
 
+//#region Express server
 app.get("/", (req, res) => {
 	res.send("Hello World!")
 })
@@ -45,3 +49,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`)
 })
+//#endregion
