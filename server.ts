@@ -162,6 +162,45 @@ process.once("SIGINT", () => canvaTelegraf.stop("SIGINT"))
 process.once("SIGTERM", () => canvaTelegraf.stop("SIGTERM"))
 //#endregion
 
+//#region InstagramStoryBot
+const instagramStoryTelegraf = new Telegraf(
+	process.env.INSTAGRAM_STORY_BOT_TOKEN
+)
+const instagramStoryBot = await prisma.bot.findFirst({
+	where: { name: "instagram_story_crosspost_bot" }
+})
+
+instagramStoryTelegraf.start(async ctx => {
+	let chat = await instagramStoryTelegraf.telegram.getChat(ctx.chat.id)
+	if (chat.type != "private") return
+
+	ctx.reply(startMessage.replace("{0}", chat.first_name))
+
+	// Check if the user is already in the database
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: instagramStoryBot.id,
+			chatId: chat.id
+		}
+	})
+
+	if (user == null) {
+		// Create a new user
+		await prisma.user.create({
+			data: {
+				botId: instagramStoryBot.id,
+				chatId: chat.id
+			}
+		})
+	}
+})
+
+instagramStoryTelegraf.launch()
+
+process.once("SIGINT", () => instagramStoryTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => instagramStoryTelegraf.stop("SIGTERM"))
+//#endregion
+
 //#region Express server
 app.get("/", (req, res) => {
 	res.send("Hello World!")
