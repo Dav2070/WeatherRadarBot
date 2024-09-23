@@ -201,6 +201,45 @@ process.once("SIGINT", () => instagramStoryTelegraf.stop("SIGINT"))
 process.once("SIGTERM", () => instagramStoryTelegraf.stop("SIGTERM"))
 //#endregion
 
+//#region FlirtBot
+const flirtTelegraf = new Telegraf(
+	process.env.FLIRT_BOT_TOKEN
+)
+const flirtBot = await prisma.bot.findFirst({
+	where: { name: "flirter_chat_bot" }
+})
+
+flirtTelegraf.start(async ctx => {
+	let chat = await flirtTelegraf.telegram.getChat(ctx.chat.id)
+	if (chat.type != "private") return
+
+	ctx.reply(startMessage.replace("{0}", chat.first_name))
+
+	// Check if the user is already in the database
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: flirtBot.id,
+			chatId: chat.id
+		}
+	})
+
+	if (user == null) {
+		// Create a new user
+		await prisma.user.create({
+			data: {
+				botId: flirtBot.id,
+				chatId: chat.id
+			}
+		})
+	}
+})
+
+flirtTelegraf.launch()
+
+process.once("SIGINT", () => flirtTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => flirtTelegraf.stop("SIGTERM"))
+//#endregion
+
 //#region Express server
 app.get("/", (req, res) => {
 	res.send("Hello World!")
