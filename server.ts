@@ -240,6 +240,45 @@ process.once("SIGINT", () => flirtTelegraf.stop("SIGINT"))
 process.once("SIGTERM", () => flirtTelegraf.stop("SIGTERM"))
 //#endregion
 
+//#region RialTunnel
+const rialTunnelTelegraf = new Telegraf(
+	process.env.RIAL_TUNNEL_BOT_TOKEN
+)
+const rialTunnelBot = await prisma.bot.findFirst({
+	where: { name: "rial_tunnel_bot" }
+})
+
+rialTunnelTelegraf.start(async ctx => {
+	let chat = await rialTunnelTelegraf.telegram.getChat(ctx.chat.id)
+	if (chat.type != "private") return
+
+	ctx.reply(startMessage.replace("{0}", chat.first_name))
+
+	// Check if the user is already in the database
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: rialTunnelBot.id,
+			chatId: chat.id
+		}
+	})
+
+	if (user == null) {
+		// Create a new user
+		await prisma.user.create({
+			data: {
+				botId: rialTunnelBot.id,
+				chatId: chat.id
+			}
+		})
+	}
+})
+
+rialTunnelTelegraf.launch()
+
+process.once("SIGINT", () => rialTunnelTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => rialTunnelTelegraf.stop("SIGTERM"))
+//#endregion
+
 //#region Express server
 app.get("/", (req, res) => {
 	res.send("Hello World!")
