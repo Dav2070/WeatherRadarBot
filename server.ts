@@ -1,6 +1,6 @@
 import express from "express"
 import { PrismaClient } from "@prisma/client"
-import { Telegraf } from "telegraf"
+import { Telegraf, Markup } from "telegraf"
 import "dotenv/config"
 
 const port = process.env.PORT || 5000
@@ -85,9 +85,7 @@ process.once("SIGTERM", () => amazonSearchTelegraf.stop("SIGTERM"))
 //#endregion
 
 //#region WriteForMeBot
-const writeForMeTelegraf = new Telegraf(
-	process.env.WRITE_FOR_ME_BOT_TOKEN
-)
+const writeForMeTelegraf = new Telegraf(process.env.WRITE_FOR_ME_BOT_TOKEN)
 const writeForMeBot = await prisma.bot.findFirst({
 	where: { name: "writeforme_writer_bot" }
 })
@@ -124,9 +122,7 @@ process.once("SIGTERM", () => writeForMeTelegraf.stop("SIGTERM"))
 //#endregion
 
 //#region CanvaBot
-const canvaTelegraf = new Telegraf(
-	process.env.CANVA_BOT_TOKEN
-)
+const canvaTelegraf = new Telegraf(process.env.CANVA_BOT_TOKEN)
 const canvaBot = await prisma.bot.findFirst({
 	where: { name: "canva_design_bot" }
 })
@@ -202,9 +198,7 @@ process.once("SIGTERM", () => instagramStoryTelegraf.stop("SIGTERM"))
 //#endregion
 
 //#region FlirtBot
-const flirtTelegraf = new Telegraf(
-	process.env.FLIRT_BOT_TOKEN
-)
+const flirtTelegraf = new Telegraf(process.env.FLIRT_BOT_TOKEN)
 const flirtBot = await prisma.bot.findFirst({
 	where: { name: "flirter_chat_bot" }
 })
@@ -241,9 +235,7 @@ process.once("SIGTERM", () => flirtTelegraf.stop("SIGTERM"))
 //#endregion
 
 //#region RialTunnel
-const rialTunnelTelegraf = new Telegraf(
-	process.env.RIAL_TUNNEL_BOT_TOKEN
-)
+const rialTunnelTelegraf = new Telegraf(process.env.RIAL_TUNNEL_BOT_TOKEN)
 const rialTunnelBot = await prisma.bot.findFirst({
 	where: { name: "rial_tunnel_bot" }
 })
@@ -251,8 +243,6 @@ const rialTunnelBot = await prisma.bot.findFirst({
 rialTunnelTelegraf.start(async ctx => {
 	let chat = await rialTunnelTelegraf.telegram.getChat(ctx.chat.id)
 	if (chat.type != "private") return
-
-	ctx.reply(startMessage.replace("{0}", chat.first_name))
 
 	// Check if the user is already in the database
 	let user = await prisma.user.findFirst({
@@ -264,13 +254,28 @@ rialTunnelTelegraf.start(async ctx => {
 
 	if (user == null) {
 		// Create a new user
-		await prisma.user.create({
+		user = await prisma.user.create({
 			data: {
 				botId: rialTunnelBot.id,
 				chatId: chat.id
 			}
 		})
 	}
+
+	ctx.reply(
+		`Hi ${chat.first_name} 👋\n\nWelcome to the Rial Tunnel Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
+		Markup.inlineKeyboard([
+			Markup.button.callback("Send Rial to the EU", "rialToEuro"),
+			Markup.button.callback("Send Euro to Iran", "euroToRial")
+		])
+	)
+
+	rialTunnelTelegraf.action("rialToEuro", ctx =>
+		ctx.reply("You selected Rial to Euro")
+	)
+	rialTunnelTelegraf.action("euroToRial", ctx =>
+		ctx.reply("You selected Euro to Rial")
+	)
 })
 
 rialTunnelTelegraf.launch()
