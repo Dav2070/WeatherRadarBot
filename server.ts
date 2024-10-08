@@ -270,12 +270,31 @@ rialTunnelTelegraf.start(async ctx => {
 		])
 	)
 
-	rialTunnelTelegraf.action("rialToEuro", ctx =>
-		ctx.reply("You selected Rial to Euro")
-	)
-	rialTunnelTelegraf.action("euroToRial", ctx =>
+	rialTunnelTelegraf.action("rialToEuro", ctx => {
+		ctx.reply(
+			"To send rial to an european bank account, you need a partner who wants to send euro to Iran.\nYour partner will receive a code. Please enter the code, so we can connect you with your partner."
+		)
+
+		rialTunnelTelegraf.on("text", async ctx => {
+			ctx.reply("Looking for a partner with this code...")
+
+			let partner = await prisma.rialTunnelBotPartner.findFirst({
+				where: {
+					uuid: ctx.message.text
+				}
+			})
+
+			if (partner == null) {
+				ctx.reply(
+					"No partner with this code found. Please enter a different code or start again using /start"
+				)
+			}
+		})
+	})
+
+	rialTunnelTelegraf.action("euroToRial", ctx => {
 		ctx.reply("You selected Euro to Rial")
-	)
+	})
 })
 
 rialTunnelTelegraf.launch()
