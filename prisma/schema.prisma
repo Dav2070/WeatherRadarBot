@@ -14,9 +14,20 @@ model Bot {
 }
 
 model User {
-  id        BigInt   @id @default(autoincrement())
-  botId     BigInt
-  chatId    BigInt
-  createdAt DateTime @default(now())
-  bot       Bot      @relation(fields: [botId], references: [id])
+  id                        BigInt                 @id @default(autoincrement())
+  botId                     BigInt
+  chatId                    BigInt
+  createdAt                 DateTime               @default(now())
+  bot                       Bot                    @relation(fields: [botId], references: [id])
+  rialTunnelBotEuroPartners RialTunnelBotPartner[] @relation(name: "rialTunnelBotEuroPartners")
+  rialTunnelBotRialPartners RialTunnelBotPartner[] @relation(name: "rialTunnelBotRialPartners")
+}
+
+model RialTunnelBotPartner {
+  id         BigInt @id @default(autoincrement())
+  uuid       String @unique @default(uuid()) @db.VarChar
+  userEuroId BigInt
+  userRialId BigInt
+  userEuro   User   @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
+  userRial   User   @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
 }
