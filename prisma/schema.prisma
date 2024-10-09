@@ -24,10 +24,11 @@ model User {
 }
 
 model RialTunnelBotPartner {
-  id         BigInt @id @default(autoincrement())
-  uuid       String @unique @default(uuid()) @db.VarChar
+  id         BigInt  @id @default(autoincrement())
+  uuid       String  @unique @default(uuid()) @db.VarChar
   userEuroId BigInt
-  userRialId BigInt
-  userEuro   User   @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
-  userRial   User   @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
+  userRialId BigInt?
+  amount     Int
+  userEuro   User    @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
+  userRial   User?   @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
 }

@@ -1,6 +1,6 @@
 import express from "express"
 import { PrismaClient } from "@prisma/client"
-import { Telegraf, Markup } from "telegraf"
+import { Telegraf, Markup, Context } from "telegraf"
 import "dotenv/config"
 
 const port = process.env.PORT || 5000
@@ -276,11 +276,10 @@ rialTunnelTelegraf.start(async ctx => {
 		)
 
 		rialTunnelTelegraf.on("text", async ctx => {
-			ctx.reply("Looking for a partner with this code...")
-
 			let partner = await prisma.rialTunnelBotPartner.findFirst({
 				where: {
-					uuid: ctx.message.text
+					uuid: ctx.message.text,
+					userRialId: null
 				}
 			})
 
@@ -288,12 +287,57 @@ rialTunnelTelegraf.start(async ctx => {
 				ctx.reply(
 					"No partner with this code found. Please enter a different code or start again using /start"
 				)
+			} else {
+				// Update partner in database with the user id
+				user = await prisma.user.findFirst({
+					where: {
+						botId: rialTunnelBot.id,
+						chatId: ctx.chat.id
+					}
+				})
+
+				await prisma.rialTunnelBotPartner.update({
+					where: { id: partner.id },
+					data: { userRialId: user.id }
+				})
+
+				ctx.reply("We successfully connected you with your partner!")
 			}
 		})
 	})
 
 	rialTunnelTelegraf.action("euroToRial", ctx => {
-		ctx.reply("You selected Euro to Rial")
+		ctx.reply(
+			"How much do you want to transfer?",
+			Markup.inlineKeyboard([
+				Markup.button.callback("10 €", "10"),
+				Markup.button.callback("50 €", "50"),
+				Markup.button.callback("100 €", "100"),
+				Markup.button.callback("200 €", "200")
+			])
+		)
+
+		let amountSelectAction = async (ctx: Context, amount: number) => {
+			// Create partner in database
+			let uuid = crypto.randomUUID()
+
+			let partner = await prisma.rialTunnelBotPartner.create({
+				data: {
+					uuid,
+					userEuroId: user.id,
+					amount
+				}
+			})
+
+			ctx.replyWithMarkdownV2(
+				`Alright\\! Please send your partner the following code: \`${uuid}\``
+			)
+		}
+
+		rialTunnelTelegraf.action("10", ctx => amountSelectAction(ctx, 10))
+		rialTunnelTelegraf.action("50", ctx => amountSelectAction(ctx, 50))
+		rialTunnelTelegraf.action("100", ctx => amountSelectAction(ctx, 100))
+		rialTunnelTelegraf.action("200", ctx => amountSelectAction(ctx, 200))
 	})
 })
 
