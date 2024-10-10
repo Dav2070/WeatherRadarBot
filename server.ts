@@ -1,5 +1,5 @@
 import express from "express"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, RialTunnelBotPartner } from "@prisma/client"
 import { Telegraf, Markup, Context } from "telegraf"
 import "dotenv/config"
 
@@ -244,7 +244,8 @@ rialTunnelTelegraf.start(async ctx => {
 	let chat = await rialTunnelTelegraf.telegram.getChat(ctx.chat.id)
 	if (chat.type != "private") return
 
-	let textInputContext: "amount" | "bank_account_details" = "amount"
+	let textInputContext: "amount" | "bank_account_details" | "partner_code" =
+		"amount"
 
 	// Check if the user is already in the database
 	let user = await prisma.user.findFirst({
@@ -273,37 +274,61 @@ rialTunnelTelegraf.start(async ctx => {
 	)
 
 	rialTunnelTelegraf.action("rialToEuro", ctx => {
+		textInputContext = "partner_code"
+		let partner: RialTunnelBotPartner = null
+
 		ctx.reply(
 			"To send rial to an european bank account, you need a partner who wants to send euro to Iran.\nYour partner will receive a code. Please enter the code, so we can connect you with your partner."
 		)
 
 		rialTunnelTelegraf.on("text", async ctx => {
-			let partner = await prisma.rialTunnelBotPartner.findFirst({
-				where: {
-					uuid: ctx.message.text,
-					userRialId: null
-				}
-			})
-
-			if (partner == null) {
-				ctx.reply(
-					"No partner with this code found. Please enter a different code or start again using /start"
-				)
-			} else {
-				// Update partner in database with the user id
-				user = await prisma.user.findFirst({
+			if (textInputContext == "partner_code") {
+				partner = await prisma.rialTunnelBotPartner.findFirst({
 					where: {
-						botId: rialTunnelBot.id,
-						chatId: ctx.chat.id
+						uuid: ctx.message.text,
+						userRialId: null
 					}
 				})
 
+				if (partner == null) {
+					ctx.reply(
+						"No partner with this code found. Please enter a different code or start again using /start"
+					)
+				} else {
+					// Update partner in database with the user id
+					user = await prisma.user.findFirst({
+						where: {
+							botId: rialTunnelBot.id,
+							chatId: ctx.chat.id
+						}
+					})
+
+					await prisma.rialTunnelBotPartner.update({
+						where: { id: partner.id },
+						data: { userRialId: user.id }
+					})
+
+					textInputContext = "bank_account_details"
+
+					ctx.reply(
+						"We successfully connected you with your partner!\n\nNow please enter the bank account details, where you want to send the money."
+					)
+				}
+			} else if (textInputContext == "bank_account_details") {
+				let bankAccountData = ctx.message.text
+				if (ctx.message.text.length < 5) return
+
+				// Update partner in the database
 				await prisma.rialTunnelBotPartner.update({
 					where: { id: partner.id },
-					data: { userRialId: user.id }
+					data: {
+						userRialBankAccountData: bankAccountData
+					}
 				})
 
-				ctx.reply("We successfully connected you with your partner!")
+				ctx.reply(
+					"Thank you! You will receive a message when the money was sent to your bank account."
+				)
 			}
 		})
 	})
