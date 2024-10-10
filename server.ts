@@ -308,7 +308,7 @@ rialTunnelTelegraf.start(async ctx => {
 
 	rialTunnelTelegraf.action("euroToRial", ctx => {
 		ctx.reply(
-			"How much do you want to transfer?",
+			"How much do you want to transfer? Select a value or send one in the chat.",
 			Markup.inlineKeyboard([
 				Markup.button.callback("10 €", "10"),
 				Markup.button.callback("50 €", "50"),
@@ -330,7 +330,7 @@ rialTunnelTelegraf.start(async ctx => {
 			})
 
 			ctx.replyWithMarkdownV2(
-				`Alright\\! Please send your partner the following code: \`${uuid}\``
+				`Alright\\! Please send the following code to your partner: \`${uuid}\``
 			)
 		}
 
@@ -338,6 +338,16 @@ rialTunnelTelegraf.start(async ctx => {
 		rialTunnelTelegraf.action("50", ctx => amountSelectAction(ctx, 50))
 		rialTunnelTelegraf.action("100", ctx => amountSelectAction(ctx, 100))
 		rialTunnelTelegraf.action("200", ctx => amountSelectAction(ctx, 200))
+
+		rialTunnelTelegraf.on("text", async ctx => {
+			let value = Number(ctx.message.text)
+
+			if (value <= 0 || isNaN(value)) {
+				ctx.reply("The value is invalid.")
+			} else {
+				amountSelectAction(ctx, value)
+			}
+		})
 	})
 })
 
