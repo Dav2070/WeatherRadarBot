@@ -244,6 +244,8 @@ rialTunnelTelegraf.start(async ctx => {
 	let chat = await rialTunnelTelegraf.telegram.getChat(ctx.chat.id)
 	if (chat.type != "private") return
 
+	let textInputContext: "amount" | "bank_account_details" = "amount"
+
 	// Check if the user is already in the database
 	let user = await prisma.user.findFirst({
 		where: {
@@ -317,20 +319,15 @@ rialTunnelTelegraf.start(async ctx => {
 			])
 		)
 
-		let amountSelectAction = async (ctx: Context, amount: number) => {
-			// Create partner in database
-			let uuid = crypto.randomUUID()
+		let amount = 10
+		textInputContext = "amount"
 
-			let partner = await prisma.rialTunnelBotPartner.create({
-				data: {
-					uuid,
-					userEuroId: user.id,
-					amount
-				}
-			})
+		let amountSelectAction = (ctx: Context, value: number) => {
+			textInputContext = "bank_account_details"
+			amount = value
 
-			ctx.replyWithMarkdownV2(
-				`Alright\\! Please send the following code to your partner: \`${uuid}\``
+			ctx.reply(
+				"Now, please enter the bank account details of your bank account in Iran, where you want to send the money to."
 			)
 		}
 
@@ -340,12 +337,33 @@ rialTunnelTelegraf.start(async ctx => {
 		rialTunnelTelegraf.action("200", ctx => amountSelectAction(ctx, 200))
 
 		rialTunnelTelegraf.on("text", async ctx => {
-			let value = Number(ctx.message.text)
+			if (textInputContext == "amount") {
+				let value = Number(ctx.message.text.replaceAll("€", "").trim())
 
-			if (value <= 0 || isNaN(value)) {
-				ctx.reply("The value is invalid.")
-			} else {
-				amountSelectAction(ctx, value)
+				if (value <= 0 || isNaN(value)) {
+					ctx.reply("The value is invalid.")
+				} else {
+					amountSelectAction(ctx, value)
+				}
+			} else if (textInputContext == "bank_account_details") {
+				let bankAccountData = ctx.message.text
+				if (ctx.message.text.length < 5) return
+
+				// Create partner in database
+				let uuid = crypto.randomUUID()
+
+				let partner = await prisma.rialTunnelBotPartner.create({
+					data: {
+						uuid,
+						userEuroId: user.id,
+						amount,
+						userEuroBankAccountData: bankAccountData
+					}
+				})
+
+				ctx.replyWithMarkdownV2(
+					`Alright\\! Please send the following code to your partner:\n\`${uuid}\`\n\nWe will send you the next instructions when your partner has connected using your code\\.`
+				)
 			}
 		})
 	})
