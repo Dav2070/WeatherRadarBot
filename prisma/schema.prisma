@@ -24,13 +24,15 @@ model User {
 }
 
 model RialTunnelBotPartner {
-  id         BigInt   @id @default(autoincrement())
-  uuid       String   @unique @default(uuid()) @db.VarChar
-  userEuroId BigInt
-  userRialId BigInt?
-  amount     Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-  userEuro   User     @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
-  userRial   User?    @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
+  id                      BigInt   @id @default(autoincrement())
+  uuid                    String   @unique @default(uuid()) @db.VarChar
+  userEuroId              BigInt
+  userRialId              BigInt?
+  amount                  Int
+  userEuroBankAccountData String   @db.VarChar
+  userRialBankAccountData String?  @db.VarChar
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @default(now()) @updatedAt
+  userEuro                User     @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
+  userRial                User?    @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
 }
