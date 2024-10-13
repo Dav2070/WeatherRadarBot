@@ -309,7 +309,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "inputIranianBankAccountDetails":
-			let iranianBankAccountData = ctx.message.text
+			let iranianBankAccountData = ctx.message.text as string
 			if (ctx.message.text.length < 5) return
 
 			// Create partner in database
@@ -329,7 +329,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 			break
 		case "inputEuropeanBankAccountDetails":
-			let europeanBankAccountData = ctx.message.text
+			let europeanBankAccountData = ctx.message.text as string
 			if (ctx.message.text.length < 5) return
 
 			// Update partner in the database
