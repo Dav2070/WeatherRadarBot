@@ -18,6 +18,7 @@
 		"typescript": "^5.5.2"
 	},
 	"devDependencies": {
+		"@types/express": "^5.0.0",
 		"@types/node": "^20.14.9",
 		"concurrently": "^8.2.2",
 		"dotenv": "^16.4.5",
