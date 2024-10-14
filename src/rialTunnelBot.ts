@@ -23,6 +23,7 @@ type UserContext =
 	| "inputEuropeanBankAccountDetails"
 	| "inputPartnerCode"
 	| "inputAdminPassword"
+	| "admin"
 
 interface UserState {
 	user: User
@@ -223,7 +224,20 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "inputAdminPassword":
-			ctx.reply("Hallo Welt!!")
+			let input = ctx.message.text
+
+			// Check the password
+			if (input == "/admin") {
+				ctx.reply("Please enter the admin password.")
+			} else if (input != process.env.RIAL_TUNNEL_ADMIN_PASSWORD) {
+				ctx.reply("Password incorrect.")
+			} else {
+				await setContext(userState.rialTunnelBotUser, "admin")
+				rialTunnelBotAction(ctx)
+			}
+			break
+		case "admin":
+			ctx.reply("Hello Admin!")
 			break
 	}
 }
