@@ -22,6 +22,7 @@ type UserContext =
 	| "inputIranianBankAccountDetails"
 	| "inputEuropeanBankAccountDetails"
 	| "inputPartnerCode"
+	| "inputAdminPassword"
 
 interface UserState {
 	user: User
@@ -33,101 +34,126 @@ let userStates: { [chatId: number]: UserState } = {}
 
 if (rialTunnelBot != null) {
 	rialTunnelTelegraf.start(async ctx => {
-		let chat = await rialTunnelTelegraf.telegram.getChat(ctx.chat.id)
-		if (chat.type != "private") return
+		if (ctx.chat.type != "private") return
 
-		// Check if the user is already in the database
-		let user = await prisma.user.findFirst({
-			where: {
-				botId: rialTunnelBot.id,
-				chatId: chat.id
-			}
-		})
-
-		if (user == null) {
-			// Create a new user
-			user = await prisma.user.create({
-				data: {
-					botId: rialTunnelBot.id,
-					chatId: chat.id
-				}
-			})
-		}
-
-		// Find the partner object
-		let partner = await prisma.rialTunnelBotPartner.findFirst({
-			where: {
-				OR: [{ userEuroId: user.id }, { userRialId: user.id }]
-			}
-		})
-
-		if (partner == null) {
-			// Create a new partner object
-			let uuid = crypto.randomUUID()
-
-			partner = await prisma.rialTunnelBotPartner.create({
-				data: {
-					uuid,
-					userEuroId: user.id
-				}
-			})
-		}
-
-		// Find the rial tunnel bot user
-		let rialTunnelBotUser = await prisma.rialTunnelBotUser.findFirst({
-			where: {
-				userId: user.id
-			}
-		})
-
-		if (rialTunnelBotUser == null) {
-			// Create a new rial tunnel bot user
-			rialTunnelBotUser = await prisma.rialTunnelBotUser.create({
-				data: {
-					userId: user.id
-				}
-			})
-		}
-
-		// Initialize user state
-		userStates[ctx.chat.id] = {
-			user,
-			rialTunnelBotUser,
-			partner
-		}
+		await init(ctx)
 
 		ctx.reply(
-			`Hi ${chat.first_name} 👋\n\nWelcome to the Rial Tunnel Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
+			`Hi ${ctx.chat.first_name} 👋\n\nWelcome to the Rial Tunnel Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
 			Markup.inlineKeyboard([
 				Markup.button.callback("Send Rial to the EU", "rialToEuro"),
 				Markup.button.callback("Send Euro to Iran", "euroToRial")
 			])
 		)
-
-		rialTunnelTelegraf.action("rialToEuro", async ctx => {
-			let chatId = ctx.chat?.id
-			if (chatId == null) return
-
-			await setContext(
-				userStates[chatId].rialTunnelBotUser,
-				"rialToEuroSelected"
-			)
-			rialTunnelBotAction(ctx)
-		})
-
-		rialTunnelTelegraf.action("euroToRial", async ctx => {
-			let chatId = ctx.chat?.id
-			if (chatId == null) return
-
-			await setContext(
-				userStates[chatId].rialTunnelBotUser,
-				"euroToRialSelected"
-			)
-			rialTunnelBotAction(ctx)
-		})
-
-		rialTunnelTelegraf.on("text", async ctx => rialTunnelBotAction(ctx))
 	})
+
+	rialTunnelTelegraf.action("rialToEuro", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"rialToEuroSelected"
+		)
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.action("euroToRial", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"euroToRialSelected"
+		)
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.on("text", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.command("admin", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"inputAdminPassword"
+		)
+		rialTunnelBotAction(ctx)
+	})
+}
+
+async function init(ctx: Context<any>) {
+	if (ctx.chat.type != "private" || userStates[ctx.chat.id] != null) return
+
+	// Check if the user is already in the database
+	let user = await prisma.user.findFirst({
+		where: {
+			botId: rialTunnelBot.id,
+			chatId: ctx.chat.id
+		}
+	})
+
+	if (user == null) {
+		// Create a new user
+		user = await prisma.user.create({
+			data: {
+				botId: rialTunnelBot.id,
+				chatId: ctx.chat.id
+			}
+		})
+	}
+
+	// Find the partner object
+	let partner = await prisma.rialTunnelBotPartner.findFirst({
+		where: {
+			OR: [{ userEuroId: user.id }, { userRialId: user.id }]
+		}
+	})
+
+	if (partner == null) {
+		// Create a new partner object
+		let uuid = crypto.randomUUID()
+
+		partner = await prisma.rialTunnelBotPartner.create({
+			data: {
+				uuid,
+				userEuroId: user.id
+			}
+		})
+	}
+
+	// Find the rial tunnel bot user
+	let rialTunnelBotUser = await prisma.rialTunnelBotUser.findFirst({
+		where: {
+			userId: user.id
+		}
+	})
+
+	if (rialTunnelBotUser == null) {
+		// Create a new rial tunnel bot user
+		rialTunnelBotUser = await prisma.rialTunnelBotUser.create({
+			data: {
+				userId: user.id
+			}
+		})
+	}
+
+	// Initialize the user state
+	userStates[ctx.chat.id] = {
+		user,
+		rialTunnelBotUser,
+		partner
+	}
 }
 
 async function rialTunnelBotAction(ctx: Context<any>) {
@@ -195,6 +221,9 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					"inputEuropeanBankAccountDetails"
 				)
 			}
+			break
+		case "inputAdminPassword":
+			ctx.reply("Hallo Welt!!")
 			break
 	}
 }
