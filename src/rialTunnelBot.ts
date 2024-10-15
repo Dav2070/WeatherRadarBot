@@ -24,12 +24,18 @@ type UserContext =
 	| "inputPartnerCode"
 	| "inputAdminPassword"
 	| "adminStart"
+	| "adminMoneyReceived"
+	| "adminMoneyReceivedInputPartnerCode"
+	| "adminMoneyReceivedInputAmount"
 
 interface UserState {
 	user: User
 	rialTunnelBotUser: RialTunnelBotUser
 	partner: RialTunnelBotPartner
 	isAdmin: boolean
+	inputs: {
+		adminSelectedPartner: RialTunnelBotPartner
+	}
 }
 
 let userStates: { [chatId: number]: UserState } = {}
@@ -57,6 +63,18 @@ if (rialTunnelBot != null) {
 		await setContext(
 			userStates[ctx.chat.id].rialTunnelBotUser,
 			"inputAdminPassword"
+		)
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.command("adminMoneyReceived", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"adminMoneyReceived"
 		)
 		rialTunnelBotAction(ctx)
 	})
@@ -155,7 +173,10 @@ async function init(ctx: Context<any>) {
 		user,
 		rialTunnelBotUser,
 		partner,
-		isAdmin: false
+		isAdmin: false,
+		inputs: {
+			adminSelectedPartner: null
+		}
 	}
 }
 
@@ -244,7 +265,60 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			rialTunnelBotAction(ctx)
 			break
 		case "adminStart":
-			ctx.reply("Available admin commands:\n/admin")
+			ctx.reply("Available admin commands:\n/admin\n/adminMoneyReceived")
+			break
+		case "adminMoneyReceived":
+			ctx.reply(
+				"Enter the partner code for which you want to send the money received message."
+			)
+			await setContext(
+				userState.rialTunnelBotUser,
+				"adminMoneyReceivedInputPartnerCode"
+			)
+			break
+		case "adminMoneyReceivedInputPartnerCode":
+			let adminPartnerCodeInput = ctx.message.text as string
+
+			let adminPartner = await prisma.rialTunnelBotPartner.findFirst({
+				where: {
+					uuid: adminPartnerCodeInput
+				}
+			})
+
+			if (adminPartner == null) {
+				ctx.reply("No partner found, please try again.")
+			} else {
+				ctx.reply("Please enter the amount of euro that was tranferred.")
+				userState.inputs.adminSelectedPartner = adminPartner
+
+				await setContext(
+					userState.rialTunnelBotUser,
+					"adminMoneyReceivedInputAmount"
+				)
+			}
+
+			break
+		case "adminMoneyReceivedInputAmount":
+			let adminPartnerAmount = Number(ctx.message.text as string)
+
+			if (isNaN(adminPartnerAmount) || adminPartnerAmount <= 0) {
+				ctx.reply("Amount is invalid.")
+			} else {
+				// Update the partner in the database
+				await prisma.rialTunnelBotPartner.update({
+					where: {
+						id: userState.partner.id
+					},
+					data: {
+						amount: adminPartnerAmount
+					}
+				})
+
+				ctx.reply("Amount was successfully saved!")
+				await setContext(userState.rialTunnelBotUser, "adminStart")
+				rialTunnelBotAction(ctx)
+			}
+
 			break
 	}
 }
