@@ -23,12 +23,13 @@ type UserContext =
 	| "inputEuropeanBankAccountDetails"
 	| "inputPartnerCode"
 	| "inputAdminPassword"
-	| "admin"
+	| "adminStart"
 
 interface UserState {
 	user: User
 	rialTunnelBotUser: RialTunnelBotUser
 	partner: RialTunnelBotPartner
+	isAdmin: boolean
 }
 
 let userStates: { [chatId: number]: UserState } = {}
@@ -46,6 +47,18 @@ if (rialTunnelBot != null) {
 				Markup.button.callback("Send Euro to Iran", "euroToRial")
 			])
 		)
+	})
+
+	rialTunnelTelegraf.command("admin", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"inputAdminPassword"
+		)
+		rialTunnelBotAction(ctx)
 	})
 
 	rialTunnelTelegraf.action("rialToEuro", async ctx => {
@@ -77,18 +90,6 @@ if (rialTunnelBot != null) {
 
 		await init(ctx)
 
-		rialTunnelBotAction(ctx)
-	})
-
-	rialTunnelTelegraf.command("admin", async ctx => {
-		if (ctx.chat.type != "private") return
-
-		await init(ctx)
-
-		await setContext(
-			userStates[ctx.chat.id].rialTunnelBotUser,
-			"inputAdminPassword"
-		)
 		rialTunnelBotAction(ctx)
 	})
 }
@@ -153,7 +154,8 @@ async function init(ctx: Context<any>) {
 	userStates[ctx.chat.id] = {
 		user,
 		rialTunnelBotUser,
-		partner
+		partner,
+		isAdmin: false
 	}
 }
 
@@ -226,18 +228,23 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 		case "inputAdminPassword":
 			let input = ctx.message.text
 
-			// Check the password
-			if (input == "/admin") {
-				ctx.reply("Please enter the admin password.")
-			} else if (input != process.env.RIAL_TUNNEL_ADMIN_PASSWORD) {
-				ctx.reply("Password incorrect.")
-			} else {
-				await setContext(userState.rialTunnelBotUser, "admin")
-				rialTunnelBotAction(ctx)
+			if (!userState.isAdmin) {
+				// Check the password
+				if (input == "/admin") {
+					ctx.reply("Please enter the admin password.")
+					break
+				} else if (input != process.env.RIAL_TUNNEL_ADMIN_PASSWORD) {
+					ctx.reply("Password incorrect.")
+					break
+				}
 			}
+
+			userState.isAdmin = true
+			await setContext(userState.rialTunnelBotUser, "adminStart")
+			rialTunnelBotAction(ctx)
 			break
-		case "admin":
-			ctx.reply("Hello Admin!")
+		case "adminStart":
+			ctx.reply("Available admin commands:\n/admin")
 			break
 	}
 }
