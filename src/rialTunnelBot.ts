@@ -140,18 +140,6 @@ async function init(ctx: Context<any>) {
 		}
 	})
 
-	if (partner == null) {
-		// Create a new partner object
-		let uuid = crypto.randomUUID()
-
-		partner = await prisma.rialTunnelBotPartner.create({
-			data: {
-				uuid,
-				userEuroId: user.id
-			}
-		})
-	}
-
 	// Find the rial tunnel bot user
 	let rialTunnelBotUser = await prisma.rialTunnelBotUser.findFirst({
 		where: {
@@ -186,12 +174,24 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 	switch (userState.rialTunnelBotUser.context) {
 		case "rialToEuroSelected":
 			ctx.reply(
-				"To send rial to an european bank account, you need a partner who wants to send euro to Iran.\n\nYour partner will receive a code. Please enter the code, so we can connect you with your partner."
+				"To send rial to an european bank account, you need a partner who wants to send the same amount of money from the EU to Iran.\n\nYour partner will receive a code. Please enter the code, so we can connect you with your partner."
 			)
 
 			await setContext(userState.rialTunnelBotUser, "inputPartnerCode")
 			break
 		case "euroToRialSelected":
+			if (userState.partner == null) {
+				// Create a new partner object
+				let uuid = crypto.randomUUID()
+
+				userState.partner = await prisma.rialTunnelBotPartner.create({
+					data: {
+						uuid,
+						userEuroId: userState.user.id
+					}
+				})
+			}
+
 			ctx.replyWithMarkdownV2(
 				`Alright, we created the following partner code for you:\n\`${userState.partner.uuid}\`\n\nFirst, please send the amount you want to transfer to Iran to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://www.paypal.com/paypalme/dav2070)`
 			)
@@ -315,6 +315,18 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				})
 
 				ctx.reply("Amount was successfully saved!")
+
+				// Send next message to the user
+				let user = await prisma.user.findFirst({
+					where: { id: userState.partner.userEuroId }
+				})
+
+				rialTunnelTelegraf.telegram.sendMessage(
+					user.chatId.toString(),
+					`Thank you\\! We received ${adminPartnerAmount} €\\.\n\nNow, please send the partner code to your partner\\. We will let you know when the money in Rial was sent to your Iranian bank account\\.\n\n\`${userState.partner.uuid}\``,
+					{ parse_mode: "MarkdownV2" }
+				)
+
 				await setContext(userState.rialTunnelBotUser, "adminStart")
 				rialTunnelBotAction(ctx)
 			}
