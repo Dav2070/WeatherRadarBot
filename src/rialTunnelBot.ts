@@ -19,6 +19,7 @@ type UserContext =
 	| null
 	| "rialToEuroSelected"
 	| "euroToRialSelected"
+	| "inputAmount"
 	| "inputIranianBankAccountDetails"
 	| "inputEuropeanBankAccountDetails"
 	| "inputPartnerCode"
@@ -34,6 +35,7 @@ interface UserState {
 	partner: RialTunnelBotPartner
 	isAdmin: boolean
 	inputs: {
+		amount: number
 		adminSelectedPartner: RialTunnelBotPartner
 	}
 }
@@ -103,6 +105,46 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
+	rialTunnelTelegraf.action("10", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
+		userStates[ctx.chat.id].inputs.amount = 10
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.action("50", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
+		userStates[ctx.chat.id].inputs.amount = 50
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.action("100", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
+		userStates[ctx.chat.id].inputs.amount = 100
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.action("200", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
+		userStates[ctx.chat.id].inputs.amount = 200
+		rialTunnelBotAction(ctx)
+	})
+
 	rialTunnelTelegraf.on("text", async ctx => {
 		if (ctx.chat.type != "private") return
 
@@ -163,6 +205,7 @@ async function init(ctx: Context<any>) {
 		partner,
 		isAdmin: false,
 		inputs: {
+			amount: null,
 			adminSelectedPartner: null
 		}
 	}
@@ -192,8 +235,56 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				})
 			}
 
+			ctx.reply(
+				"How much do you want to transfer? Select a value or send one in the chat.",
+				Markup.inlineKeyboard([
+					Markup.button.callback("10 €", "10"),
+					Markup.button.callback("50 €", "50"),
+					Markup.button.callback("100 €", "100"),
+					Markup.button.callback("200 €", "200")
+				])
+			)
+
+			userState.inputs.amount = null
+			await setContext(userState.rialTunnelBotUser, "inputAmount")
+
+			/*
 			ctx.replyWithMarkdownV2(
 				`Alright, we created the following partner code for you:\n\`${userState.partner.uuid}\`\n\nFirst, please send the amount you want to transfer to Iran to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://www.paypal.com/paypalme/dav2070)`
+			)
+			*/
+			break
+		case "inputAmount":
+			let amount = userState.inputs.amount
+
+			if (amount == null) {
+				amount = Number(
+					(ctx.message.text as string).replace("€", "").trim()
+				)
+
+				if (isNaN(amount) || amount <= 0) {
+					ctx.reply("Amount invalid")
+					break
+				}
+			}
+
+			// Save the amount
+			await prisma.rialTunnelBotPartner.update({
+				where: {
+					id: userState.partner.id
+				},
+				data: {
+					amount
+				}
+			})
+
+			ctx.reply(
+				"Please enter the details of your iranian bank account, where you want to send the money to."
+			)
+
+			await setContext(
+				userState.rialTunnelBotUser,
+				"inputIranianBankAccountDetails"
 			)
 			break
 		case "inputIranianBankAccountDetails":
