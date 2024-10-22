@@ -36,7 +36,6 @@ interface UserState {
 	partner: RialTunnelBotPartner
 	isAdmin: boolean
 	inputs: {
-		amount: number
 		adminSelectedPartner: RialTunnelBotPartner
 	}
 }
@@ -106,46 +105,6 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.action("10", async ctx => {
-		if (ctx.chat.type != "private") return
-
-		await init(ctx)
-
-		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
-		userStates[ctx.chat.id].inputs.amount = 10
-		rialTunnelBotAction(ctx)
-	})
-
-	rialTunnelTelegraf.action("50", async ctx => {
-		if (ctx.chat.type != "private") return
-
-		await init(ctx)
-
-		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
-		userStates[ctx.chat.id].inputs.amount = 50
-		rialTunnelBotAction(ctx)
-	})
-
-	rialTunnelTelegraf.action("100", async ctx => {
-		if (ctx.chat.type != "private") return
-
-		await init(ctx)
-
-		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
-		userStates[ctx.chat.id].inputs.amount = 100
-		rialTunnelBotAction(ctx)
-	})
-
-	rialTunnelTelegraf.action("200", async ctx => {
-		if (ctx.chat.type != "private") return
-
-		await init(ctx)
-
-		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "inputAmount")
-		userStates[ctx.chat.id].inputs.amount = 200
-		rialTunnelBotAction(ctx)
-	})
-
 	rialTunnelTelegraf.on("text", async ctx => {
 		if (ctx.chat.type != "private") return
 
@@ -199,7 +158,6 @@ async function init(ctx: Context<any>) {
 		partner: null,
 		isAdmin: false,
 		inputs: {
-			amount: null,
 			adminSelectedPartner: null
 		}
 	}
@@ -218,30 +176,22 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			break
 		case "euroToRialSelected":
 			ctx.reply(
-				"How much do you want to transfer? Select a value or send one in the chat.",
-				Markup.inlineKeyboard([
-					Markup.button.callback("10 €", "10"),
-					Markup.button.callback("50 €", "50"),
-					Markup.button.callback("100 €", "100"),
-					Markup.button.callback("200 €", "200")
-				])
+				"How many Euros do you want to transfer? Please send a value in the chat."
 			)
 
-			userState.inputs.amount = null
 			await setContext(userState.rialTunnelBotUser, "inputAmount")
 			break
 		case "inputAmount":
-			let amount = userState.inputs.amount
+			let amount = Number(
+				(ctx.message.text as string).replace("€", "").trim()
+			)
 
-			if (amount == null) {
-				amount = Number(
-					(ctx.message.text as string).replace("€", "").trim()
-				)
-
-				if (isNaN(amount) || amount <= 0) {
-					ctx.reply("Amount invalid")
-					break
-				}
+			if (isNaN(amount) || amount <= 0) {
+				ctx.reply("Amount invalid")
+				break
+			} else if (amount < 10) {
+				ctx.reply("Amount is too low. Please input at least 10 €.")
+				break
 			}
 
 			// Create a new partner object if necessary
