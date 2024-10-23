@@ -32,6 +32,7 @@ model RialTunnelBotPartner {
   amount                  Int?
   userEuroBankAccountData String?  @db.VarChar
   userRialBankAccountData String?  @db.VarChar
+  euroReceived            Boolean  @default(false)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @default(now()) @updatedAt
   userEuro                User     @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")

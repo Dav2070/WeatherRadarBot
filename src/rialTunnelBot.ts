@@ -26,18 +26,14 @@ type UserContext =
 	| "inputAdminPassword"
 	| "waitForPartnerToConnect"
 	| "adminStart"
-	| "adminMoneyReceived"
-	| "adminMoneyReceivedInputPartnerCode"
-	| "adminMoneyReceivedInputAmount"
+	| "adminEuroReceived"
+	| "adminEuroReceivedInputPartnerCode"
 
 interface UserState {
 	user: User
 	rialTunnelBotUser: RialTunnelBotUser
 	partner: RialTunnelBotPartner
 	isAdmin: boolean
-	inputs: {
-		adminSelectedPartner: RialTunnelBotPartner
-	}
 }
 
 let userStates: { [chatId: number]: UserState } = {}
@@ -69,14 +65,14 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.command("adminMoneyReceived", async ctx => {
+	rialTunnelTelegraf.command("adminEuroReceived", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
 
 		await setContext(
 			userStates[ctx.chat.id].rialTunnelBotUser,
-			"adminMoneyReceived"
+			"adminEuroReceived"
 		)
 		rialTunnelBotAction(ctx)
 	})
@@ -156,10 +152,7 @@ async function init(ctx: Context<any>) {
 		user,
 		rialTunnelBotUser,
 		partner: null,
-		isAdmin: false,
-		inputs: {
-			adminSelectedPartner: null
-		}
+		isAdmin: false
 	}
 }
 
@@ -207,7 +200,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 
 			// Save the amount
-			await prisma.rialTunnelBotPartner.update({
+			userState.partner = await prisma.rialTunnelBotPartner.update({
 				where: {
 					id: userState.partner.id
 				},
@@ -230,7 +223,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			if (ctx.message.text.length < 5) break
 
 			// Update partner in the database
-			await prisma.rialTunnelBotPartner.update({
+			userState.partner = await prisma.rialTunnelBotPartner.update({
 				where: { id: userState.partner?.id },
 				data: {
 					userEuroBankAccountData: iranianBankAccountData
@@ -251,7 +244,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			if (ctx.message.text.length < 5) break
 
 			// Update partner in the database
-			await prisma.rialTunnelBotPartner.update({
+			userState.partner = await prisma.rialTunnelBotPartner.update({
 				where: { id: userState.partner?.id },
 				data: {
 					userRialBankAccountData: europeanBankAccountData
@@ -326,18 +319,18 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			rialTunnelBotAction(ctx)
 			break
 		case "adminStart":
-			ctx.reply("Available admin commands:\n/admin\n/adminMoneyReceived")
+			ctx.reply("Available admin commands:\n/admin\n/adminEuroReceived")
 			break
-		case "adminMoneyReceived":
+		case "adminEuroReceived":
 			ctx.reply(
 				"Enter the partner code for which you want to send the money received message."
 			)
 			await setContext(
 				userState.rialTunnelBotUser,
-				"adminMoneyReceivedInputPartnerCode"
+				"adminEuroReceivedInputPartnerCode"
 			)
 			break
-		case "adminMoneyReceivedInputPartnerCode":
+		case "adminEuroReceivedInputPartnerCode":
 			let adminPartnerCodeInput = ctx.message.text as string
 
 			let adminPartner = await prisma.rialTunnelBotPartner.findFirst({
@@ -349,49 +342,42 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			if (adminPartner == null) {
 				ctx.reply("No partner found, please try again.")
 			} else {
-				ctx.reply("Please enter the amount of euro that was tranferred.")
-				userState.inputs.adminSelectedPartner = adminPartner
+				// Update the partner to set euroReceived to true
+				try {
+					userState.partner = await prisma.rialTunnelBotPartner.update({
+						where: { id: userState.partner.id },
+						data: { euroReceived: true }
+					})
 
-				await setContext(
-					userState.rialTunnelBotUser,
-					"adminMoneyReceivedInputAmount"
-				)
-			}
+					ctx.sendMessage("The partner was successfully updated!")
 
-			break
-		case "adminMoneyReceivedInputAmount":
-			let adminPartnerAmount = Number(ctx.message.text as string)
+					// Send next message to the user in EU
+					let euUser = await prisma.user.findFirst({
+						where: { id: userState.partner.userEuroId }
+					})
 
-			if (isNaN(adminPartnerAmount) || adminPartnerAmount <= 0) {
-				ctx.reply("Amount is invalid.")
-			} else {
-				// Update the partner in the database
-				await prisma.rialTunnelBotPartner.update({
-					where: {
-						id: userState.partner.id
-					},
-					data: {
-						amount: adminPartnerAmount
-					}
-				})
+					rialTunnelTelegraf.telegram.sendMessage(
+						euUser.chatId.toString(),
+						`Thank you, we received ${userState.partner.amount} €!\n\nNext, your partner will send the amount in Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
+					)
 
-				ctx.reply("Amount was successfully saved!")
+					// Send next message to the user in Iran
+					let iranUser = await prisma.user.findFirst({
+						where: { id: userState.partner.userRialId }
+					})
 
-				// Send next message to the user
-				let user = await prisma.user.findFirst({
-					where: { id: userState.partner.userEuroId }
-				})
-
-				rialTunnelTelegraf.telegram.sendMessage(
-					user.chatId.toString(),
-					`Thank you\\! We received ${adminPartnerAmount} €\\.\n\nNow, please send the partner code to your partner\\. We will let you know when the money in Rial was sent to your Iranian bank account\\.\n\n\`${userState.partner.uuid}\``,
-					{ parse_mode: "MarkdownV2" }
-				)
+					rialTunnelTelegraf.telegram.sendMessage(
+						iranUser.chatId.toString(),
+						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send x Rial to the following bank account. When you have done that and your partner has confirmed, that he has received the money, we will send the money to your bank account.\n\n${userState.partner.userEuroBankAccountData}`
+					)
+				} catch (error) {
+					console.error(error)
+					ctx.sendMessage("An unexpected error occured, please try again")
+				}
 
 				await setContext(userState.rialTunnelBotUser, "adminStart")
 				rialTunnelBotAction(ctx)
 			}
-
 			break
 	}
 }
