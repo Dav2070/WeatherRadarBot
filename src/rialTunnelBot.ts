@@ -5,8 +5,13 @@ import {
 	RialTunnelBotUser
 } from "@prisma/client"
 import { Telegraf, Markup, Context } from "telegraf"
+import axios from "axios"
 
 const prisma = new PrismaClient()
+const exchangeRatesUrl =
+	"https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.min.json"
+const exchangeRatesFallbackUrl =
+	"https://latest.currency-api.pages.dev/v1/currencies/eur.min.json"
 
 export const rialTunnelTelegraf = new Telegraf(
 	process.env.RIAL_TUNNEL_BOT_TOKEN ?? ""
@@ -392,4 +397,33 @@ async function setContext(
 		where: { id: rialTunnelBotUser.id },
 		data: { context }
 	})
+}
+
+console.log(await getRialExchangeRate())
+
+async function getRialExchangeRate(): Promise<number> {
+	try {
+		let result = await axios({
+			method: "get",
+			url: exchangeRatesUrl
+		})
+
+		return result.data.eur.irr
+	} catch (error) {
+		console.error("Error in getting exchange rates")
+		console.error(error)
+	}
+
+	// Try with fallback url
+	try {
+		let result = await axios({
+			method: "get",
+			url: exchangeRatesFallbackUrl
+		})
+
+		return result.data.eur.irr
+	} catch (error) {
+		console.error("Error in getting exchange rates using fallback url")
+		console.error(error)
+	}
 }
