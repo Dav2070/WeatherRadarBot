@@ -52,8 +52,16 @@ if (rialTunnelBot != null) {
 		ctx.reply(
 			`Hi ${ctx.chat.first_name} 👋\n\nWelcome to the Rial Tunnel Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
 			Markup.inlineKeyboard([
-				Markup.button.callback("Send Rial to the EU", "rialToEuro"),
-				Markup.button.callback("Send Euro to Iran", "euroToRial")
+				[
+					Markup.button.callback("Send Rial to the EU", "rialToEuro"),
+					Markup.button.callback("Send Euro to Iran", "euroToRial")
+				],
+				[
+					Markup.button.callback(
+						"Check the current exchange rate",
+						"exchangeRate"
+					)
+				]
 			])
 		)
 	})
@@ -104,6 +112,22 @@ if (rialTunnelBot != null) {
 			"euroToRialSelected"
 		)
 		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.action("exchangeRate", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		let exchangeRateEur = await getRialExchangeRate()
+		let exchangeRateIrr = 1 / exchangeRateEur
+
+		ctx.replyWithMarkdownV2(
+			`The current exchange rate:\n\n*1 EUR \\= ${Math.floor(
+				exchangeRateEur
+			)} IRR*\n*1 IRR \\= ${exchangeRateIrr
+				.toFixed(8)
+				.toString()
+				.replace(".", "\\.")} EUR*`
+		)
 	})
 
 	rialTunnelTelegraf.on("text", async ctx => {
@@ -398,8 +422,6 @@ async function setContext(
 		data: { context }
 	})
 }
-
-console.log(await getRialExchangeRate())
 
 async function getRialExchangeRate(): Promise<number> {
 	try {
