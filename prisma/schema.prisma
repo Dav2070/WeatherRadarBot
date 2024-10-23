@@ -29,7 +29,8 @@ model RialTunnelBotPartner {
   uuid                    String   @unique @default(uuid()) @db.VarChar
   userEuroId              BigInt
   userRialId              BigInt?
-  amount                  Int?
+  amountEUR               Int?
+  amountIRR               Int?
   userEuroBankAccountData String?  @db.VarChar
   userRialBankAccountData String?  @db.VarChar
   euroReceived            Boolean  @default(false)

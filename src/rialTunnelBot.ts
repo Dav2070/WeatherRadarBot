@@ -176,11 +176,19 @@ async function init(ctx: Context<any>) {
 		})
 	}
 
+	// Find the last rial tunnel bot partner of the user
+	let partner = await prisma.rialTunnelBotPartner.findFirst({
+		where: {
+			OR: [{ userEuroId: user.id }, { userRialId: user.id }]
+		},
+		orderBy: { createdAt: "desc" }
+	})
+
 	// Initialize the user state
 	userStates[ctx.chat.id] = {
 		user,
 		rialTunnelBotUser,
-		partner: null,
+		partner,
 		isAdmin: false
 	}
 }
@@ -216,25 +224,26 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			}
 
-			// Create a new partner object if necessary
-			if (userState.partner == null) {
-				let uuid = crypto.randomUUID()
+			// Create a new partner object
+			let uuid = crypto.randomUUID()
 
-				userState.partner = await prisma.rialTunnelBotPartner.create({
-					data: {
-						uuid,
-						userEuroId: userState.user.id
-					}
-				})
-			}
+			userState.partner = await prisma.rialTunnelBotPartner.create({
+				data: {
+					uuid,
+					userEuroId: userState.user.id
+				}
+			})
 
 			// Save the amount
+			let exchangeRate = await getRialExchangeRate()
+
 			userState.partner = await prisma.rialTunnelBotPartner.update({
 				where: {
 					id: userState.partner.id
 				},
 				data: {
-					amount
+					amountEUR: amount * 100,
+					amountIRR: amount * exchangeRate
 				}
 			})
 
@@ -253,7 +262,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			// Update partner in the database
 			userState.partner = await prisma.rialTunnelBotPartner.update({
-				where: { id: userState.partner?.id },
+				where: { id: userState.partner.id },
 				data: {
 					userEuroBankAccountData: iranianBankAccountData
 				}
@@ -289,7 +298,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				where: { id: userState.partner.userEuroId }
 			})
 
-			let formattedAmount = (userState.partner.amount * 1.025)
+			let formattedAmount = ((userState.partner.amountEUR / 100) * 1.025)
 				.toFixed(2)
 				.replace(".", "\\.")
 
@@ -387,7 +396,12 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
-						`Thank you, we received ${userState.partner.amount} €!\n\nNext, your partner will send the amount in Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
+						`Thank you, we received ${(
+							(userState.partner.amountEUR / 100) *
+							1.025
+						).toFixed(2)} €!\n\nNext, your partner will send ${
+							userState.partner.amountIRR
+						} Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
 					)
 
 					// Send next message to the user in Iran
@@ -397,7 +411,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send x Rial to the following bank account. When you have done that and your partner has confirmed, that he has received the money, we will send the money to your bank account.\n\n${userState.partner.userEuroBankAccountData}`
+						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send ${
+							userState.partner.amountIRR
+						} Rial to the following bank account. When you have done that and your partner has confirmed that he has received the money, we will send ${(
+							(userState.partner.amountEUR / 100) *
+							0.975
+						).toFixed(2)} € to your bank account.\n\n${
+							userState.partner.userEuroBankAccountData
+						}`
 					)
 				} catch (error) {
 					console.error(error)
