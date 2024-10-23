@@ -267,16 +267,13 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				where: { id: userState.partner.userEuroId }
 			})
 
+			let formattedAmount = (userState.partner.amount * 1.025)
+				.toFixed(2)
+				.replace(".", "\\.")
+
 			rialTunnelTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				`Your partner has successfully connected using your code\\!\n\nNow, please send ${(
-					userState.partner.amount * 1.025
-				)
-					.toFixed(2)
-					.replace(
-						".",
-						"\\."
-					)} € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://www.paypal.com/paypalme/dav2070)`,
+				`Your partner has successfully connected using your code\\!\n\nNow, please send ${formattedAmount} € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://paypal.me/dav2070/${formattedAmount}EUR)`,
 				{ parse_mode: "MarkdownV2" }
 			)
 
