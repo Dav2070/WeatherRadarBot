@@ -451,7 +451,7 @@ async function getRialExchangeRate(): Promise<number> {
 			url: exchangeRatesUrl
 		})
 
-		return result.data.eur.irr * 1.628291
+		return result.data.eur.irr * 1.628291 * 10
 	} catch (error) {
 		console.error("Error in getting exchange rates")
 		console.error(error)
@@ -464,7 +464,7 @@ async function getRialExchangeRate(): Promise<number> {
 			url: exchangeRatesFallbackUrl
 		})
 
-		return result.data.eur.irr * 1.628291
+		return result.data.eur.irr * 1.628291 * 10
 	} catch (error) {
 		console.error("Error in getting exchange rates using fallback url")
 		console.error(error)
