@@ -304,7 +304,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			rialTunnelTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				`Your partner has successfully connected using your code\\!\n\nNow, please send ${formattedAmount} € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://paypal.me/dav2070/${formattedAmount}EUR)`,
+				`Your partner has successfully connected using your code\\!\n\nNow, please send \`${formattedAmount}\` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://paypal.me/dav2070/${formattedAmount}EUR)`,
 				{ parse_mode: "MarkdownV2" }
 			)
 
@@ -396,14 +396,18 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
-						`Thank you, we received ${(
+						`Thank you, we received *${(
 							(adminPartner.amountEUR / 100) *
 							1.025
-						).toFixed(
-							2
-						)} €!\n\nNext, your partner will send ${numberWithCommas(
+						)
+							.toFixed(2)
+							.replace(
+								".",
+								"\\."
+							)} €*\\!\n\nNext, your partner will send *${numberWithCommas(
 							Math.floor(adminPartner.amountIRR * 0.975)
-						)} Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
+						)} Rial* to your iranian bank account\\. Please check your bank account regularly and let us know when your iranian bank has received the money\\.`,
+						{ parse_mode: "MarkdownV2" }
 					)
 
 					// Send next message to the user in Iran
@@ -413,14 +417,17 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send ${numberWithCommas(
+						`Hey there 👋 Your partner has sent the requested amount to us\\. Next, please send \`${numberWithCommas(
 							Math.floor(adminPartner.amountIRR * 0.975)
-						)} Rial to the following bank account. When you have done that and your partner has confirmed that he has received the money, we will send ${(
+						)}\` Rial to the following bank account\\. When you have done that and your partner has confirmed that he has received the money, we will send *${(
 							(adminPartner.amountEUR / 100) *
 							0.975
-						).toFixed(2)} € to your bank account.\n\n${
+						)
+							.toFixed(2)
+							.replace(".", "\\.")} €* to your bank account\\.\n\n\`${
 							adminPartner.userEuroBankAccountData
-						}`
+						}\``,
+						{ parse_mode: "MarkdownV2" }
 					)
 				} catch (error) {
 					console.error(error)
