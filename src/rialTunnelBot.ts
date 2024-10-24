@@ -383,7 +383,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				// Update the partner to set euroReceived to true
 				try {
 					userState.partner = await prisma.rialTunnelBotPartner.update({
-						where: { id: userState.partner.id },
+						where: { id: adminPartner.id },
 						data: { euroReceived: true }
 					})
 
@@ -391,33 +391,33 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					// Send next message to the user in EU
 					let euUser = await prisma.user.findFirst({
-						where: { id: userState.partner.userEuroId }
+						where: { id: adminPartner.userEuroId }
 					})
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
 						`Thank you, we received ${(
-							(userState.partner.amountEUR / 100) *
+							(adminPartner.amountEUR / 100) *
 							1.025
-						).toFixed(2)} €!\n\nNext, your partner will send ${
-							userState.partner.amountIRR
-						} Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
+						).toFixed(2)} €!\n\nNext, your partner will send ${Math.floor(
+							adminPartner.amountIRR * 97.5
+						)} Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
 					)
 
 					// Send next message to the user in Iran
 					let iranUser = await prisma.user.findFirst({
-						where: { id: userState.partner.userRialId }
+						where: { id: adminPartner.userRialId }
 					})
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send ${
-							userState.partner.amountIRR
-						} Rial to the following bank account. When you have done that and your partner has confirmed that he has received the money, we will send ${(
-							(userState.partner.amountEUR / 100) *
+						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send ${Math.floor(
+							adminPartner.amountIRR * 97.5
+						)} Rial to the following bank account. When you have done that and your partner has confirmed that he has received the money, we will send ${(
+							(adminPartner.amountEUR / 100) *
 							0.975
 						).toFixed(2)} € to your bank account.\n\n${
-							userState.partner.userEuroBankAccountData
+							adminPartner.userEuroBankAccountData
 						}`
 					)
 				} catch (error) {
