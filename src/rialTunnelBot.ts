@@ -121,8 +121,8 @@ if (rialTunnelBot != null) {
 		let exchangeRateIrr = 1 / exchangeRateEur
 
 		ctx.replyWithMarkdownV2(
-			`The current exchange rate:\n\n*1 EUR \\= ${Math.floor(
-				exchangeRateEur
+			`The current exchange rate:\n\n*1 EUR \\= ${numberWithCommas(
+				Math.floor(exchangeRateEur)
 			)} IRR*\n*1 IRR \\= ${exchangeRateIrr
 				.toFixed(8)
 				.toString()
@@ -399,8 +399,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						`Thank you, we received ${(
 							(adminPartner.amountEUR / 100) *
 							1.025
-						).toFixed(2)} €!\n\nNext, your partner will send ${Math.floor(
-							adminPartner.amountIRR * 97.5
+						).toFixed(
+							2
+						)} €!\n\nNext, your partner will send ${numberWithCommas(
+							Math.floor(adminPartner.amountIRR * 0.975)
 						)} Rial to your iranian bank account. Please check your bank account regularly and let us know when your iranian bank has received the money.`
 					)
 
@@ -411,8 +413,8 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					rialTunnelTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send ${Math.floor(
-							adminPartner.amountIRR * 97.5
+						`Hey there 👋 Your partner has sent the requested amount to us. Next, please send ${numberWithCommas(
+							Math.floor(adminPartner.amountIRR * 0.975)
 						)} Rial to the following bank account. When you have done that and your partner has confirmed that he has received the money, we will send ${(
 							(adminPartner.amountEUR / 100) *
 							0.975
@@ -469,4 +471,8 @@ async function getRialExchangeRate(): Promise<number> {
 		console.error("Error in getting exchange rates using fallback url")
 		console.error(error)
 	}
+}
+
+function numberWithCommas(x: number) {
+	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
