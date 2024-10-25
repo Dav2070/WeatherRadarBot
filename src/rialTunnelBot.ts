@@ -31,6 +31,8 @@ type UserContext =
 	| "inputAdminPassword"
 	| "waitForPartnerToConnect"
 	| "moneyReceived"
+	| "moneyReceivedConfirm"
+	| "moneyReceivedConfirmInput"
 	| "adminStart"
 	| "adminEuroReceived"
 	| "adminEuroReceivedInputPartnerCode"
@@ -352,7 +354,25 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "moneyReceived":
-			ctx.reply("Thank you!")
+			ctx.reply(
+				"Are you sure? To confirm, please send `confirm` in the chat\\.",
+				{ parse_mode: "MarkdownV2" }
+			)
+
+			await setContext(userState.rialTunnelBotUser, "moneyReceivedConfirm")
+			break
+		case "moneyReceivedConfirm":
+			let moneyReceivedCheckInput = ctx.message.text as string
+
+			if (moneyReceivedCheckInput == "confirm") {
+				ctx.reply(
+					"Thank you for the confirmation! We will now send your money to your partner.\n\nThis is the end of this transaction, you don't have to do anything more. If you want to use this bot again, type /start."
+				)
+
+				await setContext(userState.rialTunnelBotUser, null)
+			} else {
+				ctx.reply("Incorrect input, please try it again.")
+			}
 			break
 		case "inputAdminPassword":
 			let input = ctx.message.text
