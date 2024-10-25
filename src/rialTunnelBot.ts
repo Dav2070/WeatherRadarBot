@@ -30,6 +30,7 @@ type UserContext =
 	| "inputPartnerCode"
 	| "inputAdminPassword"
 	| "waitForPartnerToConnect"
+	| "moneyReceived"
 	| "adminStart"
 	| "adminEuroReceived"
 	| "adminEuroReceivedInputPartnerCode"
@@ -128,6 +129,18 @@ if (rialTunnelBot != null) {
 				.toString()
 				.replace(".", "\\.")} EUR*`
 		)
+	})
+
+	rialTunnelTelegraf.action("moneyReceived", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"moneyReceived"
+		)
+		rialTunnelBotAction(ctx)
 	})
 
 	rialTunnelTelegraf.on("text", async ctx => {
@@ -338,6 +351,9 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				)
 			}
 			break
+		case "moneyReceived":
+			ctx.reply("Thank you!")
+			break
 		case "inputAdminPassword":
 			let input = ctx.message.text
 
@@ -406,8 +422,20 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 								"\\."
 							)} €*\\!\n\nNext, your partner will send *${numberWithCommas(
 							Math.floor(adminPartner.amountIRR * 0.975)
-						)} Rial* to your iranian bank account\\. Please check your bank account regularly and let us know when your iranian bank has received the money\\.`,
-						{ parse_mode: "MarkdownV2" }
+						)} Rial* to your iranian bank account\\. Please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.`,
+						{
+							parse_mode: "MarkdownV2",
+							reply_markup: {
+								inline_keyboard: [
+									[
+										Markup.button.callback(
+											"Money received",
+											"moneyReceived"
+										)
+									]
+								]
+							}
+						}
 					)
 
 					// Send next message to the user in Iran
