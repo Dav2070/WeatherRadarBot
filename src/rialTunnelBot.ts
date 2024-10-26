@@ -302,7 +302,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			ctx.reply(
-				"Thank you! You will receive a message when the money was sent to your bank account."
+				"Thank you! You will receive a message when the money will be sent to your bank account."
 			)
 
 			// Send message to other user that the partner connected successfully
@@ -367,6 +367,25 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				)
 
 				await setContext(userState.rialTunnelBotUser, null)
+
+				// Send message to the other user
+				let iranUser = await prisma.user.findFirst({
+					where: { id: userState.partner.userRialId }
+				})
+
+				rialTunnelTelegraf.telegram.sendMessage(
+					iranUser.chatId.toString(),
+					`Your partner has confirmed that he received your money\\. We will now send *${(
+						(userState.partner.amountEUR / 100) *
+						0.975
+					)
+						.toFixed(2)
+						.replace(
+							".",
+							"\\."
+						)} €* to your european bank account\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.`,
+					{ parse_mode: "MarkdownV2" }
+				)
 			} else {
 				ctx.reply("Incorrect input, please try it again.")
 			}
