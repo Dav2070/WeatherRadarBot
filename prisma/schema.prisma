@@ -33,7 +33,9 @@ model RialTunnelBotPartner {
   amountIRR               Int?
   userEuroBankAccountData String?  @db.VarChar
   userRialBankAccountData String?  @db.VarChar
-  euroReceived            Boolean  @default(false)
+  euroReceived            Boolean  @default(false) // If true, the european user has sent the amount to the PayPal account
+  rialReceived            Boolean  @default(false) // If true, the iranian user has sent the amount to the iranian bank account of the partner
+  completed               Boolean  @default(false) // If true, the entire transaction is completed
   createdAt               DateTime @default(now())
   updatedAt               DateTime @default(now()) @updatedAt
   userEuro                User     @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")

@@ -375,7 +375,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 				rialTunnelTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
-					`Your partner has confirmed that he received your money\\. We will now send *${(
+					`Your partner has confirmed that he received your money\\. Your european bank account will receive *${(
 						(userState.partner.amountEUR / 100) *
 						0.975
 					)
@@ -383,9 +383,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						.replace(
 							".",
 							"\\."
-						)} €* to your european bank account\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.`,
+						)} €* within the next few days\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.`,
 					{ parse_mode: "MarkdownV2" }
 				)
+
+				await prisma.rialTunnelBotPartner.update({
+					where: { id: userState.partner.id },
+					data: { rialReceived: true }
+				})
 			} else {
 				ctx.reply("Incorrect input, please try it again.")
 			}
