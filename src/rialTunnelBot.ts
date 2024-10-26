@@ -361,7 +361,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 		case "moneyReceivedConfirm":
 			let moneyReceivedCheckInput = ctx.message.text as string
 
-			if (moneyReceivedCheckInput == "confirm") {
+			if (moneyReceivedCheckInput.toLowerCase() == "confirm") {
 				ctx.reply(
 					"Thank you for the confirmation! We will now send your money to your partner.\n\nThis is the end of this transaction, you don't have to do anything more. If you want to use this bot again, type /start."
 				)
