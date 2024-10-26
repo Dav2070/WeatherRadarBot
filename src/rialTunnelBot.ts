@@ -74,10 +74,7 @@ if (rialTunnelBot != null) {
 
 		await init(ctx)
 
-		await setContext(
-			userStates[ctx.chat.id].rialTunnelBotUser,
-			"inputAdminPassword"
-		)
+		await setContext(userStates[ctx.chat.id].rialTunnelBotUser, "adminStart")
 		rialTunnelBotAction(ctx)
 	})
 
@@ -375,11 +372,11 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "inputAdminPassword":
-			let input = ctx.message.text
+			let input = ctx.message.text as string
 
 			if (!userState.isAdmin) {
 				// Check the password
-				if (input == "/admin") {
+				if (input.startsWith("/")) {
 					ctx.reply("Please enter the admin password.")
 					break
 				} else if (input != process.env.RIAL_TUNNEL_ADMIN_PASSWORD) {
@@ -393,9 +390,21 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			rialTunnelBotAction(ctx)
 			break
 		case "adminStart":
+			if (!userState.isAdmin) {
+				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
+				rialTunnelBotAction(ctx)
+				break
+			}
+
 			ctx.reply("Available admin commands:\n/admin\n/adminEuroReceived")
 			break
 		case "adminEuroReceived":
+			if (!userState.isAdmin) {
+				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
+				rialTunnelBotAction(ctx)
+				break
+			}
+
 			ctx.reply(
 				"Enter the partner code for which you want to send the money received message."
 			)
@@ -405,6 +414,12 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 			break
 		case "adminEuroReceivedInputPartnerCode":
+			if (!userState.isAdmin) {
+				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
+				rialTunnelBotAction(ctx)
+				break
+			}
+
 			let adminPartnerCodeInput = ctx.message.text as string
 
 			let adminPartner = await prisma.rialTunnelBotPartner.findFirst({
