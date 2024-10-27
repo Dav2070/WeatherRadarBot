@@ -6,6 +6,7 @@ import {
 } from "@prisma/client"
 import { Telegraf, Markup, Context } from "telegraf"
 import axios from "axios"
+import { JSDOM } from "jsdom"
 
 const prisma = new PrismaClient()
 const exchangeRatesUrl =
@@ -544,12 +545,33 @@ async function getRialExchangeRate(): Promise<number> {
 	try {
 		let result = await axios({
 			method: "get",
+			url: "https://www.tgju.org/profile/price_eur"
+		})
+
+		const dom = new JSDOM(result.data)
+
+		let exchangeRateElement = dom.window.document.querySelector(
+			"#main > div.stocks-profile > div.fs-row.bootstrap-fix.widgets.full-w-set.profile-social-share-box > div.row.tgju-widgets-row > div.tgju-widgets-block.col-md-12.col-lg-4.tgju-widgets-block-bottom-unset.overview-first-block > div > div:nth-child(2) > div > div.tables-default.normal > table > tbody > tr:nth-child(1) > td.text-left"
+		)
+
+		return Number(exchangeRateElement.innerHTML.replaceAll(",", ""))
+	} catch (error) {
+		console.error("Error in getting exchange rates")
+		console.error(error)
+		return await getRialExchangeRateFallback()
+	}
+}
+
+async function getRialExchangeRateFallback(): Promise<number> {
+	try {
+		let result = await axios({
+			method: "get",
 			url: exchangeRatesUrl
 		})
 
 		return result.data.eur.irr * 1.628291 * 10
 	} catch (error) {
-		console.error("Error in getting exchange rates")
+		console.error("Error in getting fallback exchange rates")
 		console.error(error)
 	}
 
@@ -562,7 +584,9 @@ async function getRialExchangeRate(): Promise<number> {
 
 		return result.data.eur.irr * 1.628291 * 10
 	} catch (error) {
-		console.error("Error in getting exchange rates using fallback url")
+		console.error(
+			"Error in getting fallback exchange rates using fallback url"
+		)
 		console.error(error)
 	}
 }
