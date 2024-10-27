@@ -317,7 +317,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			rialTunnelTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				`Your partner has successfully connected using your code\\!\n\nNow, please send \`${formattedAmount}\` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/dav2070](https://paypal.me/dav2070/${formattedAmount}EUR)`,
+				`Your partner has successfully connected using your code\\!\n\nNow, please send \`${formattedAmount}\` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/${formattedAmount}EUR)`,
 				{ parse_mode: "MarkdownV2" }
 			)
 
