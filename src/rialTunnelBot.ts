@@ -558,11 +558,8 @@ async function getRialExchangeRate(): Promise<number> {
 	} catch (error) {
 		console.error("Error in getting exchange rates")
 		console.error(error)
-		return await getRialExchangeRateFallback()
 	}
-}
 
-async function getRialExchangeRateFallback(): Promise<number> {
 	try {
 		let result = await axios({
 			method: "get",
@@ -571,11 +568,10 @@ async function getRialExchangeRateFallback(): Promise<number> {
 
 		return result.data.eur.irr * 1.628291 * 10
 	} catch (error) {
-		console.error("Error in getting fallback exchange rates")
+		console.error("Error in getting exchange rates (2)")
 		console.error(error)
 	}
 
-	// Try with fallback url
 	try {
 		let result = await axios({
 			method: "get",
@@ -584,9 +580,7 @@ async function getRialExchangeRateFallback(): Promise<number> {
 
 		return result.data.eur.irr * 1.628291 * 10
 	} catch (error) {
-		console.error(
-			"Error in getting fallback exchange rates using fallback url"
-		)
+		console.error("Error in getting exchange rates (3)")
 		console.error(error)
 	}
 }
