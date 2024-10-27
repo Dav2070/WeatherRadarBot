@@ -37,12 +37,18 @@ type UserContext =
 	| "adminStart"
 	| "adminEuroReceived"
 	| "adminEuroReceivedInputPartnerCode"
+	| "adminEuroReceivedIncorrectAmount"
+	| "adminEuroReceivedIncorrectAmountInputPartnerCode"
+	| "adminEuroReceivedIncorrectAmountInputAmount"
 
 interface UserState {
 	user: User
 	rialTunnelBotUser: RialTunnelBotUser
 	partner: RialTunnelBotPartner
 	isAdmin: boolean
+	inputs: {
+		adminEuroReceivedIncorrectAmountPartner: RialTunnelBotPartner
+	}
 }
 
 let userStates: { [chatId: number]: UserState } = {}
@@ -87,6 +93,18 @@ if (rialTunnelBot != null) {
 		await setContext(
 			userStates[ctx.chat.id].rialTunnelBotUser,
 			"adminEuroReceived"
+		)
+		rialTunnelBotAction(ctx)
+	})
+
+	rialTunnelTelegraf.command("adminEuroReceivedIncorrectAmount", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setContext(
+			userStates[ctx.chat.id].rialTunnelBotUser,
+			"adminEuroReceivedIncorrectAmount"
 		)
 		rialTunnelBotAction(ctx)
 	})
@@ -202,7 +220,10 @@ async function init(ctx: Context<any>) {
 		user,
 		rialTunnelBotUser,
 		partner,
-		isAdmin: false
+		isAdmin: false,
+		inputs: {
+			adminEuroReceivedIncorrectAmountPartner: null
+		}
 	}
 }
 
@@ -362,12 +383,17 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 		case "moneyReceivedConfirm":
 			let moneyReceivedCheckInput = ctx.message.text as string
 
-			if (moneyReceivedCheckInput.toLowerCase() == "confirm") {
+			if (moneyReceivedCheckInput.toLowerCase().trim() == "confirm") {
 				ctx.reply(
 					"Thank you for the confirmation! We will now send your money to your partner.\n\nThis is the end of this transaction, you don't have to do anything more. If you want to use this bot again, type /start."
 				)
 
 				await setContext(userState.rialTunnelBotUser, null)
+
+				userState.partner = await prisma.rialTunnelBotPartner.update({
+					where: { id: userState.partner.id },
+					data: { rialReceived: true }
+				})
 
 				// Send message to the other user
 				let iranUser = await prisma.user.findFirst({
@@ -387,14 +413,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						)} €* within the next few days\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.`,
 					{ parse_mode: "MarkdownV2" }
 				)
-
-				await prisma.rialTunnelBotPartner.update({
-					where: { id: userState.partner.id },
-					data: { rialReceived: true }
-				})
 			} else {
 				ctx.reply("Incorrect input, please try it again.")
 			}
+
 			break
 		case "inputAdminPassword":
 			let input = ctx.message.text as string
@@ -421,7 +443,9 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			}
 
-			ctx.reply("Available admin commands:\n/admin\n/adminEuroReceived")
+			ctx.reply(
+				"Available admin commands:\n/admin\n/adminEuroReceived\n/adminEuroReceivedIncorrectAmount"
+			)
 			break
 		case "adminEuroReceived":
 			if (!userState.isAdmin) {
@@ -525,6 +549,107 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				await setContext(userState.rialTunnelBotUser, "adminStart")
 				rialTunnelBotAction(ctx)
 			}
+			break
+		case "adminEuroReceivedIncorrectAmount":
+			if (!userState.isAdmin) {
+				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
+				rialTunnelBotAction(ctx)
+				break
+			}
+
+			ctx.reply("Enter the partner code of the transaction.")
+
+			await setContext(
+				userState.rialTunnelBotUser,
+				"adminEuroReceivedIncorrectAmountInputPartnerCode"
+			)
+			break
+		case "adminEuroReceivedIncorrectAmountInputPartnerCode":
+			if (!userState.isAdmin) {
+				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
+				rialTunnelBotAction(ctx)
+				break
+			}
+
+			let adminPartnerCodeInput2 = ctx.message.text as string
+
+			let adminPartner2 = await prisma.rialTunnelBotPartner.findFirst({
+				where: {
+					uuid: adminPartnerCodeInput2
+				}
+			})
+
+			if (adminPartner2 == null) {
+				ctx.reply("No partner found, please try again.")
+				break
+			}
+
+			userState.inputs.adminEuroReceivedIncorrectAmountPartner =
+				adminPartner2
+
+			ctx.reply("Enter the amount of Euros that was sent.")
+
+			await setContext(
+				userState.rialTunnelBotUser,
+				"adminEuroReceivedIncorrectAmountInputAmount"
+			)
+			break
+		case "adminEuroReceivedIncorrectAmountInputAmount":
+			let amount2 = Number(
+				(ctx.message.text as string).replace("€", "").trim()
+			)
+			let expectedAmount = parseFloat(
+				((userState.partner.amountEUR / 100) * 1.025).toFixed(2)
+			)
+
+			if (isNaN(amount2) || amount2 <= 0) {
+				ctx.reply("Amount invalid")
+				break
+			}
+
+			let amountDiff = Math.abs(amount2 - expectedAmount)
+
+			if (amount2 > expectedAmount) {
+				ctx.reply(
+					`Amount is ${amountDiff} more than expected. Please sent the excess amount back to the user.`
+				)
+				break
+			} else if (amount2 == expectedAmount) {
+				ctx.reply("Amount is the same as the expected amount.")
+				break
+			}
+
+			// Send message to the user to send the rest of the amount
+			let user2 = await prisma.user.findFirst({
+				where: {
+					id: userState.inputs.adminEuroReceivedIncorrectAmountPartner
+						.userEuroId
+				}
+			})
+
+			let formattedExpectedAmount = expectedAmount
+				.toFixed(2)
+				.replace(".", "\\.")
+
+			let formattedAmountDiff = amountDiff.toFixed(2).replace(".", "\\.")
+
+			rialTunnelTelegraf.telegram.sendMessage(
+				user2.chatId.toString(),
+				`Thank you, we received *${amount2
+					.toFixed(2)
+					.replace(
+						".",
+						"\\."
+					)} €*\\!\n\nTo match the amount of *${formattedExpectedAmount} €*, we need you to send the remaining \`${formattedAmountDiff}\` € to continue the transaction\\.\nDon't forget to send the partner code in the transaction again\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/${formattedAmountDiff}EUR)`,
+				{ parse_mode: "MarkdownV2" }
+			)
+
+			ctx.sendMessage(
+				"Message for sending the remaining amount was sent successfully!"
+			)
+
+			await setContext(userState.rialTunnelBotUser, "adminStart")
+			rialTunnelBotAction(ctx)
 			break
 	}
 }
