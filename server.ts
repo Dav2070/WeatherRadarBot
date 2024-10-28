@@ -2,7 +2,7 @@ import express from "express"
 import { PrismaClient } from "@prisma/client"
 import { Telegraf } from "telegraf"
 import "dotenv/config"
-import { tabdilYarTelegraf } from "./src/rialTunnelBot.js"
+import { tabdilYarTelegraf } from "./src/tabdilYarBot.js"
 
 const port = process.env.PORT || 5000
 const app = express()

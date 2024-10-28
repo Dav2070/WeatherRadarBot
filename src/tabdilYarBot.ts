@@ -7,12 +7,9 @@ import {
 import { Telegraf, Markup, Context } from "telegraf"
 import axios from "axios"
 import { JSDOM } from "jsdom"
+import { de, fa } from "./locales/tabdilYar.js"
 
 const prisma = new PrismaClient()
-const exchangeRatesUrl =
-	"https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.min.json"
-const exchangeRatesFallbackUrl =
-	"https://latest.currency-api.pages.dev/v1/currencies/eur.min.json"
 
 export const tabdilYarTelegraf = new Telegraf(
 	process.env.TABDIL_YAR_BOT_TOKEN ?? ""
@@ -60,18 +57,13 @@ if (tabdilYarBot != null) {
 		await init(ctx)
 
 		ctx.reply(
-			`Hi ${ctx.chat.first_name} 👋\n\nWelcome to the Tabdil Yar Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
+			de.startMessage.replace("{0}", ctx.chat.first_name),
 			Markup.inlineKeyboard([
 				[
-					Markup.button.callback("Send Rial to the EU", "rialToEuro"),
-					Markup.button.callback("Send Euro to Iran", "euroToRial")
+					Markup.button.callback(de.startMessageOption1, "rialToEuro"),
+					Markup.button.callback(de.startMessageOption2, "euroToRial")
 				],
-				[
-					Markup.button.callback(
-						"Check the current exchange rate",
-						"exchangeRate"
-					)
-				]
+				[Markup.button.callback(de.startMessageOption3, "exchangeRate")]
 			])
 		)
 	})
@@ -140,12 +132,12 @@ if (tabdilYarBot != null) {
 		let exchangeRateIrr = 1 / exchangeRateEur
 
 		ctx.replyWithMarkdownV2(
-			`The current exchange rate:\n\n*1 EUR \\= ${numberWithCommas(
-				Math.floor(exchangeRateEur)
-			)} IRR*\n*1 IRR \\= ${exchangeRateIrr
-				.toFixed(8)
-				.toString()
-				.replace(".", "\\.")} EUR*`
+			de.exchangeRateMessage
+				.replace("{0}", numberWithCommas(Math.floor(exchangeRateEur)))
+				.replace(
+					"{1}",
+					exchangeRateIrr.toFixed(8).toString().replace(".", "\\.")
+				)
 		)
 	})
 
@@ -232,16 +224,12 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 	switch (userState.rialTunnelBotUser.context) {
 		case "rialToEuroSelected":
-			ctx.reply(
-				"To send rial to an european bank account, you need a partner who wants to send the same amount of money from the EU to Iran.\n\nYour partner will receive a code. Please enter the code, so we can connect you with your partner."
-			)
+			ctx.reply(de.rialToEuroSelectedMessage)
 
 			await setContext(userState.rialTunnelBotUser, "inputPartnerCode")
 			break
 		case "euroToRialSelected":
-			ctx.reply(
-				"How many Euros do you want to transfer? Please send a value in the chat."
-			)
+			ctx.reply(de.euroToRialSelectedMessage)
 
 			await setContext(userState.rialTunnelBotUser, "inputAmount")
 			break
@@ -251,10 +239,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 
 			if (isNaN(amount) || amount <= 0) {
-				ctx.reply("Amount invalid")
+				ctx.reply(de.inputAmount.amountInvalid)
 				break
 			} else if (amount < 10) {
-				ctx.reply("Amount is too low. Please input at least 10 €.")
+				ctx.reply(de.inputAmount.amountTooLow)
 				break
 			}
 
@@ -281,9 +269,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(
-				"Please enter the details of your iranian bank account, where you want to send the money to."
-			)
+			ctx.reply(de.inputIranianBankAccountDetailsMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -303,7 +289,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			ctx.replyWithMarkdownV2(
-				`Alright, we created a partner code for you\\. Please send this code to your partner, so we can connect you two\\.\n\n\`${userState.partner.uuid}\`\n\nYou will receive a message with the next step when your partner has connected using your code\\.`
+				de.inputIranianBankAccountDetailsSuccessMessage.replace(
+					"{0}",
+					userState.partner.uuid
+				)
 			)
 
 			await setContext(
@@ -323,9 +312,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(
-				"Thank you! You will receive a message when the money will be sent to your bank account."
-			)
+			ctx.reply(de.inputEuropeanBankAccountDetailsSuccessMessage)
 
 			// Send message to other user that the partner connected successfully
 			let user = await prisma.user.findFirst({
@@ -338,7 +325,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				`Your partner has successfully connected using your code\\!\n\nNow, please send \`${formattedAmount}\` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/${formattedAmount}EUR)`,
+				de.inputEuropeanBankAccountDetailsPartnerMessage.replaceAll(
+					"{0}",
+					formattedAmount
+				),
 				{ parse_mode: "MarkdownV2" }
 			)
 
@@ -352,9 +342,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			if (partner == null) {
-				ctx.reply(
-					"No partner with this code found. Please enter a different code or start again using /start"
-				)
+				ctx.reply(de.inputPartnerCodeNoPartnerFoundMessage)
 			} else {
 				// Update partner in database with the user id
 				userState.partner = await prisma.rialTunnelBotPartner.update({
@@ -362,9 +350,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					data: { userRialId: userState.user.id }
 				})
 
-				ctx.reply(
-					"We successfully connected you with your partner!\n\nNow please enter the bank account details, where you want to send the money."
-				)
+				ctx.reply(de.inputPartnerCodeSuccessMessage)
 
 				await setContext(
 					userState.rialTunnelBotUser,
@@ -373,10 +359,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "moneyReceived":
-			ctx.reply(
-				"Are you sure? To confirm, please send `confirm` in the chat\\.",
-				{ parse_mode: "MarkdownV2" }
-			)
+			ctx.reply(de.moneyReceivedMessage, { parse_mode: "MarkdownV2" })
 
 			await setContext(userState.rialTunnelBotUser, "moneyReceivedConfirm")
 			break
@@ -384,9 +367,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			let moneyReceivedCheckInput = ctx.message.text as string
 
 			if (moneyReceivedCheckInput.toLowerCase().trim() == "confirm") {
-				ctx.reply(
-					"Thank you for the confirmation! We will now send your money to your partner.\n\nThis is the end of this transaction, you don't have to do anything more. If you want to use this bot again, type /start."
-				)
+				ctx.reply(de.moneyReceivedConfirmSuccessMessage)
 
 				await setContext(userState.rialTunnelBotUser, null)
 
@@ -402,19 +383,16 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 				tabdilYarTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
-					`Your partner has confirmed that he received your money\\. Your european bank account will receive *${(
-						(userState.partner.amountEUR / 100) *
-						0.975
-					)
-						.toFixed(2)
-						.replace(
-							".",
-							"\\."
-						)} €* within the next few days\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.`,
+					de.moneyReceivedConfirmPartnerMessage.replace(
+						"{0}",
+						((userState.partner.amountEUR / 100) * 0.975)
+							.toFixed(2)
+							.replace(".", "\\.")
+					),
 					{ parse_mode: "MarkdownV2" }
 				)
 			} else {
-				ctx.reply("Incorrect input, please try it again.")
+				ctx.reply(de.moneyReceivedIncorrectInputMessage)
 			}
 
 			break
@@ -424,10 +402,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			if (!userState.isAdmin) {
 				// Check the password
 				if (input.startsWith("/")) {
-					ctx.reply("Please enter the admin password.")
+					ctx.reply(de.inputAdminPasswordMessage)
 					break
 				} else if (input != process.env.TABDIL_YAR_BOT_ADMIN_PASSWORD) {
-					ctx.reply("Password incorrect.")
+					ctx.reply(de.inputAdminPasswordIncorrectMessage)
 					break
 				}
 			}
@@ -443,9 +421,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			}
 
-			ctx.reply(
-				"Available admin commands:\n/admin\n/adminEuroReceived\n/adminEuroReceivedIncorrectAmount"
-			)
+			ctx.reply(de.adminStartMessage)
 			break
 		case "adminEuroReceived":
 			if (!userState.isAdmin) {
@@ -454,9 +430,8 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			}
 
-			ctx.reply(
-				"Enter the partner code for which you want to send the money received message."
-			)
+			ctx.reply(de.adminEuroReceivedMessage)
+
 			await setContext(
 				userState.rialTunnelBotUser,
 				"adminEuroReceivedInputPartnerCode"
@@ -478,7 +453,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			if (adminPartner == null) {
-				ctx.reply("No partner found, please try again.")
+				ctx.reply(de.noPartnerFoundMessage)
 			} else {
 				// Update the partner to set euroReceived to true
 				try {
@@ -487,7 +462,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						data: { euroReceived: true }
 					})
 
-					ctx.sendMessage("The partner was successfully updated!")
+					ctx.sendMessage(de.partnerUpdatedMessage)
 
 					// Send next message to the user in EU
 					let euUser = await prisma.user.findFirst({
@@ -496,24 +471,26 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					tabdilYarTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
-						`Thank you, we received *${(
-							(adminPartner.amountEUR / 100) *
-							1.025
-						)
-							.toFixed(2)
+						de.adminEuroReceivedEuroPartnerMessage
 							.replace(
-								".",
-								"\\."
-							)} €*\\!\n\nNext, your partner will send *${numberWithCommas(
-							Math.floor(adminPartner.amountIRR * 0.975)
-						)} Rial* to your iranian bank account\\. Please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.`,
+								"{0}",
+								((adminPartner.amountEUR / 100) * 1.025)
+									.toFixed(2)
+									.replace(".", "\\.")
+							)
+							.replace(
+								"{1}",
+								numberWithCommas(
+									Math.floor(adminPartner.amountIRR * 0.975)
+								)
+							),
 						{
 							parse_mode: "MarkdownV2",
 							reply_markup: {
 								inline_keyboard: [
 									[
 										Markup.button.callback(
-											"Money received",
+											de.adminEuroReceivedEuroPartnerMessageMoneyReceived,
 											"moneyReceived"
 										)
 									]
@@ -529,21 +506,25 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					tabdilYarTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						`Hey there 👋 Your partner has sent the requested amount to us\\. Next, please send \`${numberWithCommas(
-							Math.floor(adminPartner.amountIRR * 0.975)
-						)}\` Rial to the following bank account\\. When you have done that and your partner has confirmed that he has received the money, we will send *${(
-							(adminPartner.amountEUR / 100) *
-							0.975
-						)
-							.toFixed(2)
-							.replace(".", "\\.")} €* to your bank account\\.\n\n\`${
-							adminPartner.userEuroBankAccountData
-						}\``,
+						de.adminEuroReceivedRialPartnerMessage
+							.replace(
+								"{0}",
+								numberWithCommas(
+									Math.floor(adminPartner.amountIRR * 0.975)
+								)
+							)
+							.replace(
+								"{1}",
+								((adminPartner.amountEUR / 100) * 0.975)
+									.toFixed(2)
+									.replace(".", "\\.")
+							)
+							.replace("{2}", adminPartner.userEuroBankAccountData),
 						{ parse_mode: "MarkdownV2" }
 					)
 				} catch (error) {
 					console.error(error)
-					ctx.sendMessage("An unexpected error occured, please try again")
+					ctx.sendMessage(de.unexpectedErrorMessage)
 				}
 
 				await setContext(userState.rialTunnelBotUser, "adminStart")
@@ -557,7 +538,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			}
 
-			ctx.reply("Enter the partner code of the transaction.")
+			ctx.reply(de.adminEuroReceivedIncorrectAmountMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -580,14 +561,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			if (adminPartner2 == null) {
-				ctx.reply("No partner found, please try again.")
+				ctx.reply(de.noPartnerFoundMessage)
 				break
 			}
 
 			userState.inputs.adminEuroReceivedIncorrectAmountPartner =
 				adminPartner2
 
-			ctx.reply("Enter the amount of Euros that was sent.")
+			ctx.reply(de.adminEuroReceivedIncorrectAmountInputPartnerCodeMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -603,19 +584,25 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 
 			if (isNaN(amount2) || amount2 <= 0) {
-				ctx.reply("Amount invalid")
+				ctx.reply(de.inputAmount.amountInvalid)
 				break
 			}
 
 			let amountDiff = Math.abs(amount2 - expectedAmount)
+			let formattedAmountDiff = amountDiff.toFixed(2).replace(".", "\\.")
 
 			if (amount2 > expectedAmount) {
 				ctx.reply(
-					`Amount is ${amountDiff} more than expected. Please sent the excess amount back to the user.`
+					de.adminEuroReceivedIncorrectAmountInputAmountTooMuchMessage.replace(
+						"{0}",
+						formattedAmountDiff
+					)
 				)
 				break
 			} else if (amount2 == expectedAmount) {
-				ctx.reply("Amount is the same as the expected amount.")
+				ctx.reply(
+					de.adminEuroReceivedIncorrectAmountInputAmountExpectedAmountMessage
+				)
 				break
 			}
 
@@ -631,22 +618,16 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				.toFixed(2)
 				.replace(".", "\\.")
 
-			let formattedAmountDiff = amountDiff.toFixed(2).replace(".", "\\.")
-
 			tabdilYarTelegraf.telegram.sendMessage(
 				user2.chatId.toString(),
-				`Thank you, we received *${amount2
-					.toFixed(2)
-					.replace(
-						".",
-						"\\."
-					)} €*\\!\n\nTo match the amount of *${formattedExpectedAmount} €*, we need you to send the remaining \`${formattedAmountDiff}\` € to continue the transaction\\.\nDon't forget to send the partner code in the transaction again\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/${formattedAmountDiff}EUR)`,
+				de.adminEuroReceivedIncorrectAmountPartnerMessage
+					.replace("{0}", amount2.toFixed(2).replace(".", "\\."))
+					.replace("{1}", formattedExpectedAmount)
+					.replaceAll("{2}", formattedAmountDiff),
 				{ parse_mode: "MarkdownV2" }
 			)
 
-			ctx.sendMessage(
-				"Message for sending the remaining amount was sent successfully!"
-			)
+			ctx.sendMessage(de.adminEuroReceivedIncorrectAmountSuccessMessage)
 
 			await setContext(userState.rialTunnelBotUser, "adminStart")
 			rialTunnelBotAction(ctx)
@@ -688,7 +669,7 @@ async function getRialExchangeRate(): Promise<number> {
 	try {
 		let result = await axios({
 			method: "get",
-			url: exchangeRatesUrl
+			url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.min.json"
 		})
 
 		return result.data.eur.irr * 1.628291 * 10
@@ -700,7 +681,7 @@ async function getRialExchangeRate(): Promise<number> {
 	try {
 		let result = await axios({
 			method: "get",
-			url: exchangeRatesFallbackUrl
+			url: "https://latest.currency-api.pages.dev/v1/currencies/eur.min.json"
 		})
 
 		return result.data.eur.irr * 1.628291 * 10
