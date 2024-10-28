@@ -2,7 +2,7 @@ import express from "express"
 import { PrismaClient } from "@prisma/client"
 import { Telegraf } from "telegraf"
 import "dotenv/config"
-import { rialTunnelTelegraf } from "./src/rialTunnelBot.js"
+import { tabdilYarTelegraf } from "./src/rialTunnelBot.js"
 
 const port = process.env.PORT || 5000
 const app = express()
@@ -235,11 +235,11 @@ process.once("SIGINT", () => flirtTelegraf.stop("SIGINT"))
 process.once("SIGTERM", () => flirtTelegraf.stop("SIGTERM"))
 //#endregion
 
-//#region RialTunnel
-rialTunnelTelegraf.launch()
+//#region TabdilYarBot
+tabdilYarTelegraf.launch()
 
-process.once("SIGINT", () => rialTunnelTelegraf.stop("SIGINT"))
-process.once("SIGTERM", () => rialTunnelTelegraf.stop("SIGTERM"))
+process.once("SIGINT", () => tabdilYarTelegraf.stop("SIGINT"))
+process.once("SIGTERM", () => tabdilYarTelegraf.stop("SIGTERM"))
 //#endregion
 
 //#region Express server

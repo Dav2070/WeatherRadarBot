@@ -14,11 +14,11 @@ const exchangeRatesUrl =
 const exchangeRatesFallbackUrl =
 	"https://latest.currency-api.pages.dev/v1/currencies/eur.min.json"
 
-export const rialTunnelTelegraf = new Telegraf(
-	process.env.RIAL_TUNNEL_BOT_TOKEN ?? ""
+export const tabdilYarTelegraf = new Telegraf(
+	process.env.TABDIL_YAR_BOT_TOKEN ?? ""
 )
-const rialTunnelBot = await prisma.bot.findFirst({
-	where: { name: "rial_tunnel_bot" }
+const tabdilYarBot = await prisma.bot.findFirst({
+	where: { name: "tabdil_yar_bot" }
 })
 
 type UserContext =
@@ -53,14 +53,14 @@ interface UserState {
 
 let userStates: { [chatId: number]: UserState } = {}
 
-if (rialTunnelBot != null) {
-	rialTunnelTelegraf.start(async ctx => {
+if (tabdilYarBot != null) {
+	tabdilYarTelegraf.start(async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
 
 		ctx.reply(
-			`Hi ${ctx.chat.first_name} 👋\n\nWelcome to the Rial Tunnel Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
+			`Hi ${ctx.chat.first_name} 👋\n\nWelcome to the Tabdil Yar Bot! This bot let's you\n- Send Rial from Iran to an european bank account\n- Send Euro to an iranian bank account\n\nWhat do you want to do?`,
 			Markup.inlineKeyboard([
 				[
 					Markup.button.callback("Send Rial to the EU", "rialToEuro"),
@@ -76,7 +76,7 @@ if (rialTunnelBot != null) {
 		)
 	})
 
-	rialTunnelTelegraf.command("admin", async ctx => {
+	tabdilYarTelegraf.command("admin", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -85,7 +85,7 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.command("adminEuroReceived", async ctx => {
+	tabdilYarTelegraf.command("adminEuroReceived", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -97,7 +97,7 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.command("adminEuroReceivedIncorrectAmount", async ctx => {
+	tabdilYarTelegraf.command("adminEuroReceivedIncorrectAmount", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -109,7 +109,7 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.action("rialToEuro", async ctx => {
+	tabdilYarTelegraf.action("rialToEuro", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -121,7 +121,7 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.action("euroToRial", async ctx => {
+	tabdilYarTelegraf.action("euroToRial", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -133,7 +133,7 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.action("exchangeRate", async ctx => {
+	tabdilYarTelegraf.action("exchangeRate", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		let exchangeRateEur = await getRialExchangeRate()
@@ -149,7 +149,7 @@ if (rialTunnelBot != null) {
 		)
 	})
 
-	rialTunnelTelegraf.action("moneyReceived", async ctx => {
+	tabdilYarTelegraf.action("moneyReceived", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -161,7 +161,7 @@ if (rialTunnelBot != null) {
 		rialTunnelBotAction(ctx)
 	})
 
-	rialTunnelTelegraf.on("text", async ctx => {
+	tabdilYarTelegraf.on("text", async ctx => {
 		if (ctx.chat.type != "private") return
 
 		await init(ctx)
@@ -176,7 +176,7 @@ async function init(ctx: Context<any>) {
 	// Check if the user is already in the database
 	let user = await prisma.user.findFirst({
 		where: {
-			botId: rialTunnelBot.id,
+			botId: tabdilYarBot.id,
 			chatId: ctx.chat.id
 		}
 	})
@@ -185,7 +185,7 @@ async function init(ctx: Context<any>) {
 		// Create a new user
 		user = await prisma.user.create({
 			data: {
-				botId: rialTunnelBot.id,
+				botId: tabdilYarBot.id,
 				chatId: ctx.chat.id
 			}
 		})
@@ -336,7 +336,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				.toFixed(2)
 				.replace(".", "\\.")
 
-			rialTunnelTelegraf.telegram.sendMessage(
+			tabdilYarTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
 				`Your partner has successfully connected using your code\\!\n\nNow, please send \`${formattedAmount}\` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/${formattedAmount}EUR)`,
 				{ parse_mode: "MarkdownV2" }
@@ -400,7 +400,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					where: { id: userState.partner.userRialId }
 				})
 
-				rialTunnelTelegraf.telegram.sendMessage(
+				tabdilYarTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
 					`Your partner has confirmed that he received your money\\. Your european bank account will receive *${(
 						(userState.partner.amountEUR / 100) *
@@ -426,7 +426,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				if (input.startsWith("/")) {
 					ctx.reply("Please enter the admin password.")
 					break
-				} else if (input != process.env.RIAL_TUNNEL_ADMIN_PASSWORD) {
+				} else if (input != process.env.TABDIL_YAR_BOT_ADMIN_PASSWORD) {
 					ctx.reply("Password incorrect.")
 					break
 				}
@@ -494,7 +494,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						where: { id: adminPartner.userEuroId }
 					})
 
-					rialTunnelTelegraf.telegram.sendMessage(
+					tabdilYarTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
 						`Thank you, we received *${(
 							(adminPartner.amountEUR / 100) *
@@ -527,7 +527,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						where: { id: adminPartner.userRialId }
 					})
 
-					rialTunnelTelegraf.telegram.sendMessage(
+					tabdilYarTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
 						`Hey there 👋 Your partner has sent the requested amount to us\\. Next, please send \`${numberWithCommas(
 							Math.floor(adminPartner.amountIRR * 0.975)
@@ -633,7 +633,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			let formattedAmountDiff = amountDiff.toFixed(2).replace(".", "\\.")
 
-			rialTunnelTelegraf.telegram.sendMessage(
+			tabdilYarTelegraf.telegram.sendMessage(
 				user2.chatId.toString(),
 				`Thank you, we received *${amount2
 					.toFixed(2)
