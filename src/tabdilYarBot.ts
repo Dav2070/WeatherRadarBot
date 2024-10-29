@@ -68,6 +68,12 @@ if (tabdilYarBot != null) {
 		)
 	})
 
+	tabdilYarTelegraf.command("info", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		ctx.reply(fa.infoMessage)
+	})
+
 	tabdilYarTelegraf.command("admin", async ctx => {
 		if (ctx.chat.type != "private") return
 
