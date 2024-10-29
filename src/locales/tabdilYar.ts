@@ -35,8 +35,6 @@ export const de = {
 	moneyReceivedConfirmPartnerMessage:
 		"Your partner has confirmed that he received your money\\. Your european bank account will receive *{0} €* within the next few days\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.",
 	moneyReceivedIncorrectInputMessage: "Incorrect input, please try it again.",
-	inputAdminPasswordMessage: "Please enter the admin password.",
-	inputAdminPasswordIncorrectMessage: "Password incorrect.",
 	adminStartMessage:
 		"Available admin commands:\n/admin\n/adminEuroReceived\n/adminEuroReceivedIncorrectAmount",
 	adminEuroReceivedMessage:
@@ -87,8 +85,6 @@ export const fa = {
 	moneyReceivedConfirmSuccessMessage: "",
 	moneyReceivedConfirmPartnerMessage: "",
 	moneyReceivedIncorrectInputMessage: "",
-	inputAdminPasswordMessage: "",
-	inputAdminPasswordIncorrectMessage: "",
 	adminStartMessage: "",
 	adminEuroReceivedMessage: "",
 	noPartnerFoundMessage: "",

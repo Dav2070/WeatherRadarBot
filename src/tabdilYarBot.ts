@@ -27,7 +27,6 @@ type UserContext =
 	| "inputIranianBankAccountDetails"
 	| "inputEuropeanBankAccountDetails"
 	| "inputPartnerCode"
-	| "inputAdminPassword"
 	| "waitForPartnerToConnect"
 	| "moneyReceived"
 	| "moneyReceivedConfirm"
@@ -43,7 +42,6 @@ interface UserState {
 	user: User
 	rialTunnelBotUser: RialTunnelBotUser
 	partner: RialTunnelBotPartner
-	isAdmin: boolean
 	inputs: {
 		adminEuroReceivedIncorrectAmountPartner: RialTunnelBotPartner
 	}
@@ -76,7 +74,7 @@ if (tabdilYarBot != null) {
 	})
 
 	tabdilYarTelegraf.command("admin", async ctx => {
-		if (ctx.chat.type != "private") return
+		if (ctx.chat.type != "private" || !isAdmin(ctx.chat.username)) return
 
 		await init(ctx)
 
@@ -85,7 +83,7 @@ if (tabdilYarBot != null) {
 	})
 
 	tabdilYarTelegraf.command("adminEuroReceived", async ctx => {
-		if (ctx.chat.type != "private") return
+		if (ctx.chat.type != "private" || !isAdmin(ctx.chat.username)) return
 
 		await init(ctx)
 
@@ -97,7 +95,7 @@ if (tabdilYarBot != null) {
 	})
 
 	tabdilYarTelegraf.command("adminEuroReceivedIncorrectAmount", async ctx => {
-		if (ctx.chat.type != "private") return
+		if (ctx.chat.type != "private" || !isAdmin(ctx.chat.username)) return
 
 		await init(ctx)
 
@@ -219,7 +217,6 @@ async function init(ctx: Context<any>) {
 		user,
 		rialTunnelBotUser,
 		partner,
-		isAdmin: false,
 		inputs: {
 			adminEuroReceivedIncorrectAmountPartner: null
 		}
@@ -406,40 +403,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 
 			break
-		case "inputAdminPassword":
-			let input = ctx.message.text as string
-
-			if (!userState.isAdmin) {
-				// Check the password
-				if (input.startsWith("/")) {
-					ctx.reply(de.inputAdminPasswordMessage)
-					break
-				} else if (input != process.env.TABDIL_YAR_BOT_ADMIN_PASSWORD) {
-					ctx.reply(de.inputAdminPasswordIncorrectMessage)
-					break
-				}
-			}
-
-			userState.isAdmin = true
-			await setContext(userState.rialTunnelBotUser, "adminStart")
-			rialTunnelBotAction(ctx)
-			break
 		case "adminStart":
-			if (!userState.isAdmin) {
-				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
-				rialTunnelBotAction(ctx)
-				break
-			}
-
 			ctx.reply(de.adminStartMessage)
 			break
 		case "adminEuroReceived":
-			if (!userState.isAdmin) {
-				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
-				rialTunnelBotAction(ctx)
-				break
-			}
-
 			ctx.reply(de.adminEuroReceivedMessage)
 
 			await setContext(
@@ -448,12 +415,6 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 			break
 		case "adminEuroReceivedInputPartnerCode":
-			if (!userState.isAdmin) {
-				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
-				rialTunnelBotAction(ctx)
-				break
-			}
-
 			let adminPartnerCodeInput = ctx.message.text as string
 
 			let adminPartner = await prisma.rialTunnelBotPartner.findFirst({
@@ -542,12 +503,6 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "adminEuroReceivedIncorrectAmount":
-			if (!userState.isAdmin) {
-				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
-				rialTunnelBotAction(ctx)
-				break
-			}
-
 			ctx.reply(de.adminEuroReceivedIncorrectAmountMessage)
 
 			await setContext(
@@ -556,12 +511,6 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 			break
 		case "adminEuroReceivedIncorrectAmountInputPartnerCode":
-			if (!userState.isAdmin) {
-				await setContext(userState.rialTunnelBotUser, "inputAdminPassword")
-				rialTunnelBotAction(ctx)
-				break
-			}
-
 			let adminPartnerCodeInput2 = ctx.message.text as string
 
 			let adminPartner2 = await prisma.rialTunnelBotPartner.findFirst({
@@ -660,6 +609,17 @@ async function setContext(
 		where: { id: rialTunnelBotUser.id },
 		data: { context }
 	})
+}
+
+function isAdmin(username: string): boolean {
+	if (username == null) return false
+
+	let admins = process.env.TABDIL_YAR_BOT_ADMINS
+	if (admins == null) return false
+
+	let adminsList = admins.toLowerCase().split(",")
+
+	return adminsList.includes(username.toLowerCase())
 }
 
 async function getRialExchangeRate(): Promise<number> {
