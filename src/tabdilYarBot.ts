@@ -586,7 +586,12 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				(ctx.message.text as string).replace("€", "").trim()
 			)
 			let expectedAmount = parseFloat(
-				((userState.partner.amountEUR / 100) * 1.025).toFixed(2)
+				(
+					(userState.inputs.adminEuroReceivedIncorrectAmountPartner
+						.amountEUR /
+						100) *
+					1.025
+				).toFixed(2)
 			)
 
 			if (isNaN(amount2) || amount2 <= 0) {
