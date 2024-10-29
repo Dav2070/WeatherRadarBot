@@ -10,6 +10,7 @@ import { JSDOM } from "jsdom"
 import { de, fa } from "./locales/tabdilYar.js"
 
 const prisma = new PrismaClient()
+const commission = 0.025
 
 export const tabdilYarTelegraf = new Telegraf(
 	process.env.TABDIL_YAR_BOT_TOKEN ?? ""
@@ -325,7 +326,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				where: { id: userState.partner.userEuroId }
 			})
 
-			let formattedAmount = ((userState.partner.amountEUR / 100) * 1.025)
+			let formattedAmount = (
+				(userState.partner.amountEUR / 100) *
+				(1 + commission)
+			)
 				.toFixed(2)
 				.replace(".", "\\.")
 
@@ -391,7 +395,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					iranUser.chatId.toString(),
 					de.moneyReceivedConfirmPartnerMessage.replace(
 						"{0}",
-						((userState.partner.amountEUR / 100) * 0.975)
+						((userState.partner.amountEUR / 100) * (1 - commission))
 							.toFixed(2)
 							.replace(".", "\\.")
 					),
@@ -480,14 +484,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						de.adminEuroReceivedEuroPartnerMessage
 							.replace(
 								"{0}",
-								((adminPartner.amountEUR / 100) * 1.025)
+								((adminPartner.amountEUR / 100) * (1 + commission))
 									.toFixed(2)
 									.replace(".", "\\.")
 							)
 							.replace(
 								"{1}",
 								numberWithCommas(
-									Math.floor(adminPartner.amountIRR * 0.975)
+									Math.floor(adminPartner.amountIRR * (1 - commission))
 								)
 							),
 						{
@@ -516,12 +520,12 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 							.replace(
 								"{0}",
 								numberWithCommas(
-									Math.floor(adminPartner.amountIRR * 0.975)
+									Math.floor(adminPartner.amountIRR * (1 - commission))
 								)
 							)
 							.replace(
 								"{1}",
-								((adminPartner.amountEUR / 100) * 0.975)
+								((adminPartner.amountEUR / 100) * (1 - commission))
 									.toFixed(2)
 									.replace(".", "\\.")
 							)
@@ -590,7 +594,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					(userState.inputs.adminEuroReceivedIncorrectAmountPartner
 						.amountEUR /
 						100) *
-					1.025
+					(1 + commission)
 				).toFixed(2)
 			)
 
