@@ -73,6 +73,12 @@ if (tabdilYarBot != null) {
 		ctx.reply(fa.infoMessage)
 	})
 
+	tabdilYarTelegraf.command("exchangerate", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await showExchangeRate(ctx)
+	})
+
 	tabdilYarTelegraf.command("admin", async ctx => {
 		if (ctx.chat.type != "private" || !isAdmin(ctx.chat.username)) return
 
@@ -133,17 +139,7 @@ if (tabdilYarBot != null) {
 	tabdilYarTelegraf.action("exchangeRate", async ctx => {
 		if (ctx.chat.type != "private") return
 
-		let exchangeRateEur = await getRialExchangeRate()
-		let exchangeRateIrr = 1 / exchangeRateEur
-
-		ctx.replyWithMarkdownV2(
-			de.exchangeRateMessage
-				.replace("{0}", numberWithCommas(Math.floor(exchangeRateEur)))
-				.replace(
-					"{1}",
-					exchangeRateIrr.toFixed(8).toString().replace(".", "\\.")
-				)
-		)
+		await showExchangeRate(ctx)
 	})
 
 	tabdilYarTelegraf.action("moneyReceived", async ctx => {
@@ -597,6 +593,20 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			rialTunnelBotAction(ctx)
 			break
 	}
+}
+
+async function showExchangeRate(ctx: Context<any>) {
+	let exchangeRateEur = await getRialExchangeRate()
+	let exchangeRateIrr = 1 / exchangeRateEur
+
+	ctx.replyWithMarkdownV2(
+		de.exchangeRateMessage
+			.replace("{0}", numberWithCommas(Math.floor(exchangeRateEur)))
+			.replace(
+				"{1}",
+				exchangeRateIrr.toFixed(8).toString().replace(".", "\\.")
+			)
+	)
 }
 
 async function setContext(
