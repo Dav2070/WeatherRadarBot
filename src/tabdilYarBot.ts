@@ -62,7 +62,8 @@ if (tabdilYarBot != null) {
 					Markup.button.callback(de.startMessageOption1, "rialToEuro"),
 					Markup.button.callback(de.startMessageOption2, "euroToRial")
 				],
-				[Markup.button.callback(de.startMessageOption3, "exchangeRate")]
+				[Markup.button.callback(de.startMessageOption3, "exchangeRate")],
+				[Markup.button.callback(de.startMessageOption4, "info")]
 			])
 		)
 	})
@@ -140,6 +141,12 @@ if (tabdilYarBot != null) {
 		if (ctx.chat.type != "private") return
 
 		await showExchangeRate(ctx)
+	})
+
+	tabdilYarTelegraf.action("info", ctx => {
+		if (ctx.chat.type != "private") return
+
+		ctx.reply(fa.infoMessage)
 	})
 
 	tabdilYarTelegraf.action("moneyReceived", async ctx => {

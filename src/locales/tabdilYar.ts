@@ -6,6 +6,7 @@ export const de = {
 	startMessageOption1: "Send Rial to the EU",
 	startMessageOption2: "Send Euro to Iran",
 	startMessageOption3: "Check the current exchange rate",
+	startMessageOption4: "Show bot info",
 	exchangeRateMessage:
 		"The current exchange rate:\n\n*1 EUR \\= {0} IRR*\n*1 IRR \\= {1} EUR*",
 	rialToEuroSelectedMessage:
@@ -68,6 +69,7 @@ export const fa = {
 	startMessageOption1: "",
 	startMessageOption2: "",
 	startMessageOption3: "",
+	startMessageOption4: "",
 	exchangeRateMessage: "",
 	rialToEuroSelectedMessage: "",
 	euroToRialSelectedMessage: "",
