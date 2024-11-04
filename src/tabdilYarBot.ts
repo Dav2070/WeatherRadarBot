@@ -7,7 +7,7 @@ import {
 import { Telegraf, Markup, Context } from "telegraf"
 import axios from "axios"
 import { JSDOM } from "jsdom"
-import { de, fa } from "./locales/tabdilYar.js"
+import { en, fa } from "./locales/tabdilYar.js"
 
 const prisma = new PrismaClient()
 const commission = 0.025
@@ -42,6 +42,7 @@ interface UserState {
 	user: User
 	rialTunnelBotUser: RialTunnelBotUser
 	partner: RialTunnelBotPartner
+	lang: typeof en
 	inputs: {
 		adminEuroReceivedIncorrectAmountPartner: RialTunnelBotPartner
 	}
@@ -55,15 +56,17 @@ if (tabdilYarBot != null) {
 
 		await init(ctx)
 
+		let userState = userStates[ctx.chat.id]
+
 		ctx.reply(
-			fa.startMessage.replace("{0}", ctx.chat.first_name),
+			userState.lang.startMessage.replace("{0}", ctx.chat.first_name),
 			Markup.inlineKeyboard([
 				[
-					Markup.button.callback(fa.startMessageOption1, "rialToEuro"),
-					Markup.button.callback(fa.startMessageOption2, "euroToRial")
+					Markup.button.callback(userState.lang.startMessageOption1, "rialToEuro"),
+					Markup.button.callback(userState.lang.startMessageOption2, "euroToRial")
 				],
-				[Markup.button.callback(fa.startMessageOption3, "exchangeRate")],
-				[Markup.button.callback(fa.startMessageOption4, "info")]
+				[Markup.button.callback(userState.lang.startMessageOption3, "exchangeRate")],
+				[Markup.button.callback(userState.lang.startMessageOption4, "info")]
 			])
 		)
 	})
@@ -71,7 +74,7 @@ if (tabdilYarBot != null) {
 	tabdilYarTelegraf.command("info", async ctx => {
 		if (ctx.chat.type != "private") return
 
-		ctx.reply(fa.infoMessage)
+		ctx.reply(userStates[ctx.chat.id].lang.infoMessage)
 	})
 
 	tabdilYarTelegraf.command("exchangerate", async ctx => {
@@ -160,10 +163,12 @@ if (tabdilYarBot != null) {
 		await showExchangeRate(ctx)
 	})
 
-	tabdilYarTelegraf.action("info", ctx => {
+	tabdilYarTelegraf.action("info", async ctx => {
 		if (ctx.chat.type != "private") return
 
-		ctx.reply(fa.infoMessage)
+		await init(ctx)
+
+		ctx.reply(userStates[ctx.chat.id].lang.infoMessage)
 	})
 
 	tabdilYarTelegraf.action("en", async ctx => {
@@ -171,7 +176,7 @@ if (tabdilYarBot != null) {
 
 		await init(ctx)
 
-		await setLang(userStates[ctx.chat.id].rialTunnelBotUser, "en")
+		await setLang(userStates[ctx.chat.id], "en")
 
 		ctx.reply("Language was set to English")
 	})
@@ -181,7 +186,7 @@ if (tabdilYarBot != null) {
 
 		await init(ctx)
 
-		await setLang(userStates[ctx.chat.id].rialTunnelBotUser, "fa")
+		await setLang(userStates[ctx.chat.id], "fa")
 
 		ctx.reply("زبان به فارسی تنظیم شد")
 	})
@@ -257,6 +262,7 @@ async function init(ctx: Context<any>) {
 		user,
 		rialTunnelBotUser,
 		partner,
+		lang: rialTunnelBotUser.lang == "en" ? en : fa,
 		inputs: {
 			adminEuroReceivedIncorrectAmountPartner: null
 		}
@@ -268,12 +274,12 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 	switch (userState.rialTunnelBotUser.context) {
 		case "rialToEuroSelected":
-			ctx.reply(fa.rialToEuroSelectedMessage)
+			ctx.reply(userState.lang.rialToEuroSelectedMessage)
 
 			await setContext(userState.rialTunnelBotUser, "inputPartnerCode")
 			break
 		case "euroToRialSelected":
-			ctx.reply(fa.euroToRialSelectedMessage)
+			ctx.reply(userState.lang.euroToRialSelectedMessage)
 
 			await setContext(userState.rialTunnelBotUser, "inputAmount")
 			break
@@ -299,10 +305,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 
 			if (isNaN(amount) || amount <= 0) {
-				ctx.reply(fa.inputAmount.amountInvalid)
+				ctx.reply(userState.lang.inputAmount.amountInvalid)
 				break
 			} else if (amount < 10) {
-				ctx.reply(fa.inputAmount.amountTooLow)
+				ctx.reply(userState.lang.inputAmount.amountTooLow)
 				break
 			}
 
@@ -329,7 +335,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(fa.inputIranianBankAccountDetailsMessage)
+			ctx.reply(userState.lang.inputIranianBankAccountDetailsMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -349,7 +355,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			ctx.replyWithMarkdownV2(
-				fa.inputIranianBankAccountDetailsSuccessMessage.replace(
+				userState.lang.inputIranianBankAccountDetailsSuccessMessage.replace(
 					"{0}",
 					userState.partner.uuid
 				)
@@ -372,7 +378,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(fa.inputEuropeanBankAccountDetailsSuccessMessage)
+			ctx.reply(userState.lang.inputEuropeanBankAccountDetailsSuccessMessage)
 
 			// Send message to other user that the partner connected successfully
 			let user = await prisma.user.findFirst({
@@ -388,7 +394,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				fa.inputEuropeanBankAccountDetailsPartnerMessage.replaceAll(
+				userState.lang.inputEuropeanBankAccountDetailsPartnerMessage.replaceAll(
 					"{0}",
 					formattedAmount
 				),
@@ -405,7 +411,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			if (partner == null) {
-				ctx.reply(fa.inputPartnerCodeNoPartnerFoundMessage)
+				ctx.reply(userState.lang.inputPartnerCodeNoPartnerFoundMessage)
 			} else {
 				// Update partner in database with the user id
 				userState.partner = await prisma.rialTunnelBotPartner.update({
@@ -413,7 +419,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					data: { userRialId: userState.user.id }
 				})
 
-				ctx.reply(fa.inputPartnerCodeSuccessMessage)
+				ctx.reply(userState.lang.inputPartnerCodeSuccessMessage)
 
 				await setContext(
 					userState.rialTunnelBotUser,
@@ -422,7 +428,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "moneyReceived":
-			ctx.reply(fa.moneyReceivedMessage, { parse_mode: "MarkdownV2" })
+			ctx.reply(userState.lang.moneyReceivedMessage, { parse_mode: "MarkdownV2" })
 
 			await setContext(userState.rialTunnelBotUser, "moneyReceivedConfirm")
 			break
@@ -435,7 +441,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				moneyReceivedCheckInput == "confirm" ||
 				moneyReceivedCheckInput == "تایید"
 			) {
-				ctx.reply(fa.moneyReceivedConfirmSuccessMessage)
+				ctx.reply(userState.lang.moneyReceivedConfirmSuccessMessage)
 
 				await setContext(userState.rialTunnelBotUser, null)
 
@@ -451,7 +457,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 				tabdilYarTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
-					fa.moneyReceivedConfirmPartnerMessage.replace(
+					userState.lang.moneyReceivedConfirmPartnerMessage.replace(
 						"{0}",
 						((userState.partner.amountEUR / 100) * (1 - commission))
 							.toFixed(2)
@@ -460,15 +466,15 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					{ parse_mode: "MarkdownV2" }
 				)
 			} else {
-				ctx.reply(fa.moneyReceivedIncorrectInputMessage)
+				ctx.reply(userState.lang.moneyReceivedIncorrectInputMessage)
 			}
 
 			break
 		case "adminStart":
-			ctx.reply(fa.adminStartMessage)
+			ctx.reply(userState.lang.adminStartMessage)
 			break
 		case "adminEuroReceived":
-			ctx.reply(fa.adminEuroReceivedMessage)
+			ctx.reply(userState.lang.adminEuroReceivedMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -485,7 +491,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			if (adminPartner == null) {
-				ctx.reply(fa.noPartnerFoundMessage)
+				ctx.reply(userState.lang.noPartnerFoundMessage)
 			} else {
 				// Update the partner to set euroReceived to true
 				try {
@@ -494,7 +500,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						data: { euroReceived: true }
 					})
 
-					ctx.sendMessage(fa.partnerUpdatedMessage)
+					ctx.sendMessage(userState.lang.partnerUpdatedMessage)
 
 					// Send next message to the user in EU
 					let euUser = await prisma.user.findFirst({
@@ -503,7 +509,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					tabdilYarTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
-						fa.adminEuroReceivedEuroPartnerMessage
+						userState.lang.adminEuroReceivedEuroPartnerMessage
 							.replace(
 								"{0}",
 								((adminPartner.amountEUR / 100) * (1 + commission))
@@ -522,7 +528,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 								inline_keyboard: [
 									[
 										Markup.button.callback(
-											fa.adminEuroReceivedEuroPartnerMessageMoneyReceived,
+											userState.lang.adminEuroReceivedEuroPartnerMessageMoneyReceived,
 											"moneyReceived"
 										)
 									]
@@ -538,7 +544,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					tabdilYarTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						fa.adminEuroReceivedRialPartnerMessage
+						userState.lang.adminEuroReceivedRialPartnerMessage
 							.replace(
 								"{0}",
 								numberWithCommas(
@@ -556,7 +562,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					)
 				} catch (error) {
 					console.error(error)
-					ctx.sendMessage(fa.unexpectedErrorMessage)
+					ctx.sendMessage(userState.lang.unexpectedErrorMessage)
 				}
 
 				await setContext(userState.rialTunnelBotUser, "adminStart")
@@ -564,7 +570,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "adminEuroReceivedIncorrectAmount":
-			ctx.reply(fa.adminEuroReceivedIncorrectAmountMessage)
+			ctx.reply(userState.lang.adminEuroReceivedIncorrectAmountMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -581,14 +587,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			if (adminPartner2 == null) {
-				ctx.reply(fa.noPartnerFoundMessage)
+				ctx.reply(userState.lang.noPartnerFoundMessage)
 				break
 			}
 
 			userState.inputs.adminEuroReceivedIncorrectAmountPartner =
 				adminPartner2
 
-			ctx.reply(fa.adminEuroReceivedIncorrectAmountInputPartnerCodeMessage)
+			ctx.reply(userState.lang.adminEuroReceivedIncorrectAmountInputPartnerCodeMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -609,7 +615,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			)
 
 			if (isNaN(amount2) || amount2 <= 0) {
-				ctx.reply(fa.inputAmount.amountInvalid)
+				ctx.reply(userState.lang.inputAmount.amountInvalid)
 				break
 			}
 
@@ -618,7 +624,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			if (amount2 > expectedAmount) {
 				ctx.reply(
-					fa.adminEuroReceivedIncorrectAmountInputAmountTooMuchMessage.replace(
+					userState.lang.adminEuroReceivedIncorrectAmountInputAmountTooMuchMessage.replace(
 						"{0}",
 						formattedAmountDiff
 					)
@@ -626,7 +632,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			} else if (amount2 == expectedAmount) {
 				ctx.reply(
-					fa.adminEuroReceivedIncorrectAmountInputAmountExpectedAmountMessage
+					userState.lang.adminEuroReceivedIncorrectAmountInputAmountExpectedAmountMessage
 				)
 				break
 			}
@@ -645,14 +651,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user2.chatId.toString(),
-				fa.adminEuroReceivedIncorrectAmountPartnerMessage
+				userState.lang.adminEuroReceivedIncorrectAmountPartnerMessage
 					.replace("{0}", amount2.toFixed(2).replace(".", "\\."))
 					.replace("{1}", formattedExpectedAmount)
 					.replaceAll("{2}", formattedAmountDiff),
 				{ parse_mode: "MarkdownV2" }
 			)
 
-			ctx.sendMessage(fa.adminEuroReceivedIncorrectAmountSuccessMessage)
+			ctx.sendMessage(userState.lang.adminEuroReceivedIncorrectAmountSuccessMessage)
 
 			await setContext(userState.rialTunnelBotUser, "adminStart")
 			rialTunnelBotAction(ctx)
@@ -661,11 +667,13 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 }
 
 async function showExchangeRate(ctx: Context<any>) {
+	await init(ctx)
+
 	let exchangeRateEur = await getRialExchangeRate()
 	let exchangeRateIrr = 1 / exchangeRateEur
 
 	ctx.replyWithMarkdownV2(
-		fa.exchangeRateMessage
+		userStates[ctx.chat.id].lang.exchangeRateMessage
 			.replace("{0}", numberWithCommas(Math.floor(exchangeRateEur)))
 			.replace(
 				"{1}",
@@ -686,17 +694,27 @@ async function setContext(
 	})
 }
 
-async function setLang(rialTunnelBotUser: RialTunnelBotUser, lang: string) {
-	rialTunnelBotUser.lang = lang
+async function setLang(userState: UserState, lang: string) {
+	userState.rialTunnelBotUser.lang = lang
 
 	await prisma.rialTunnelBotUser.update({
 		where: {
-			id: rialTunnelBotUser.id
+			id: userState.rialTunnelBotUser.id
 		},
 		data: {
 			lang
 		}
 	})
+
+	userState.lang = getLang(userState.rialTunnelBotUser)
+}
+
+function getLang(rialTunnelBotUser: RialTunnelBotUser) {
+	if (rialTunnelBotUser.lang == "en") {
+		return en
+	}
+
+	return fa
 }
 
 function isAdmin(username: string): boolean {
