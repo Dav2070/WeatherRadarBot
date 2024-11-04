@@ -80,6 +80,23 @@ if (tabdilYarBot != null) {
 		await showExchangeRate(ctx)
 	})
 
+	tabdilYarTelegraf.command("lang", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		ctx.reply("Select your preferred language", {
+			reply_markup: {
+				inline_keyboard: [
+					[
+						Markup.button.callback("English", "en"),
+						Markup.button.callback("فارسی", "fa")
+					]
+				]
+			}
+		})
+	})
+
 	tabdilYarTelegraf.command("admin", async ctx => {
 		if (ctx.chat.type != "private" || !isAdmin(ctx.chat.username)) return
 
@@ -147,6 +164,26 @@ if (tabdilYarBot != null) {
 		if (ctx.chat.type != "private") return
 
 		ctx.reply(fa.infoMessage)
+	})
+
+	tabdilYarTelegraf.action("en", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setLang(userStates[ctx.chat.id].rialTunnelBotUser, "en")
+
+		ctx.reply("Language was set to English")
+	})
+
+	tabdilYarTelegraf.action("fa", async ctx => {
+		if (ctx.chat.type != "private") return
+
+		await init(ctx)
+
+		await setLang(userStates[ctx.chat.id].rialTunnelBotUser, "fa")
+
+		ctx.reply("زبان به فارسی تنظیم شد")
 	})
 
 	tabdilYarTelegraf.action("moneyReceived", async ctx => {
@@ -646,6 +683,19 @@ async function setContext(
 	await prisma.rialTunnelBotUser.update({
 		where: { id: rialTunnelBotUser.id },
 		data: { context }
+	})
+}
+
+async function setLang(rialTunnelBotUser: RialTunnelBotUser, lang: string) {
+	rialTunnelBotUser.lang = lang
+
+	await prisma.rialTunnelBotUser.update({
+		where: {
+			id: rialTunnelBotUser.id
+		},
+		data: {
+			lang
+		}
 	})
 }
 

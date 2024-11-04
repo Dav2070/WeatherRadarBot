@@ -46,5 +46,6 @@ model RialTunnelBotUser {
   id      BigInt  @id @default(autoincrement())
   userId  BigInt
   context String? @db.VarChar
+  lang    String? @db.VarChar
   user    User    @relation(fields: [userId], references: [id])
 }
