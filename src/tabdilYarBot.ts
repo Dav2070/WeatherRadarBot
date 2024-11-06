@@ -29,8 +29,8 @@ type UserContext =
 	| "inputPartnerCode"
 	| "waitForPartnerToConnect"
 	| "moneyReceived"
+	| "moneyReceivedInputAmount"
 	| "moneyReceivedConfirm"
-	| "moneyReceivedConfirmInput"
 	| "adminStart"
 	| "adminEuroReceived"
 	| "adminEuroReceivedInputPartnerCode"
@@ -62,10 +62,21 @@ if (tabdilYarBot != null) {
 			userState.lang.startMessage.replace("{0}", ctx.chat.first_name),
 			Markup.inlineKeyboard([
 				[
-					Markup.button.callback(userState.lang.startMessageOption1, "rialToEuro"),
-					Markup.button.callback(userState.lang.startMessageOption2, "euroToRial")
+					Markup.button.callback(
+						userState.lang.startMessageOption1,
+						"rialToEuro"
+					),
+					Markup.button.callback(
+						userState.lang.startMessageOption2,
+						"euroToRial"
+					)
 				],
-				[Markup.button.callback(userState.lang.startMessageOption3, "exchangeRate")],
+				[
+					Markup.button.callback(
+						userState.lang.startMessageOption3,
+						"exchangeRate"
+					)
+				],
 				[Markup.button.callback(userState.lang.startMessageOption4, "info")]
 			])
 		)
@@ -288,25 +299,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			await setContext(userState.rialTunnelBotUser, "inputAmount")
 			break
 		case "inputAmount":
-			const chars = {
-				"€": "",
-				"۰": "0",
-				"۱": "1",
-				"۲": "2",
-				"۳": "3",
-				"۴": "4",
-				"۵": "5",
-				"۶": "6",
-				"۷": "7",
-				"۸": "8",
-				"۹": "9"
-			}
-
-			let amount = Number(
-				(ctx.message.text as string)
-					.replace(/[€۰۱۲۳۴۵۶۷۸۹]/g, m => chars[m])
-					.trim()
-			)
+			let amount = inputToNumber(ctx.message.text as string)
 
 			if (isNaN(amount) || amount <= 0) {
 				ctx.reply(userState.lang.inputAmount.amountInvalid)
@@ -432,7 +425,28 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "moneyReceived":
-			ctx.reply(userState.lang.moneyReceivedMessage, { parse_mode: "MarkdownV2" })
+			ctx.reply("Please enter the amount of Rial that you received.")
+
+			await setContext(
+				userState.rialTunnelBotUser,
+				"moneyReceivedInputAmount"
+			)
+			break
+		case "moneyReceivedInputAmount":
+			let moneyReceivedAmount = inputToNumber(ctx.message.text as string)
+
+			if (isNaN(moneyReceivedAmount) || moneyReceivedAmount <= 0) {
+				ctx.reply(userState.lang.inputAmount.amountInvalid)
+				break
+			}
+
+			ctx.reply(
+				"Did you receive *{0}* Rial? Please make sure the amount is correct\\.\n\nIf the amount is correct, please send `confirm` in the chat\\. If not, please enter the correct different value\\.".replace(
+					"{0}",
+					numberWithCommas(moneyReceivedAmount)
+				),
+				{ parse_mode: "MarkdownV2" }
+			)
 
 			await setContext(userState.rialTunnelBotUser, "moneyReceivedConfirm")
 			break
@@ -532,7 +546,8 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 								inline_keyboard: [
 									[
 										Markup.button.callback(
-											userState.lang.adminEuroReceivedEuroPartnerMessageMoneyReceived,
+											userState.lang
+												.adminEuroReceivedEuroPartnerMessageMoneyReceived,
 											"moneyReceived"
 										)
 									]
@@ -598,7 +613,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			userState.inputs.adminEuroReceivedIncorrectAmountPartner =
 				adminPartner2
 
-			ctx.reply(userState.lang.adminEuroReceivedIncorrectAmountInputPartnerCodeMessage)
+			ctx.reply(
+				userState.lang
+					.adminEuroReceivedIncorrectAmountInputPartnerCodeMessage
+			)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -636,7 +654,8 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				break
 			} else if (amount2 == expectedAmount) {
 				ctx.reply(
-					userState.lang.adminEuroReceivedIncorrectAmountInputAmountExpectedAmountMessage
+					userState.lang
+						.adminEuroReceivedIncorrectAmountInputAmountExpectedAmountMessage
 				)
 				break
 			}
@@ -662,7 +681,9 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				{ parse_mode: "MarkdownV2" }
 			)
 
-			ctx.sendMessage(userState.lang.adminEuroReceivedIncorrectAmountSuccessMessage)
+			ctx.sendMessage(
+				userState.lang.adminEuroReceivedIncorrectAmountSuccessMessage
+			)
 
 			await setContext(userState.rialTunnelBotUser, "adminStart")
 			rialTunnelBotAction(ctx)
@@ -778,4 +799,22 @@ async function getRialExchangeRate(): Promise<number> {
 
 function numberWithCommas(x: number) {
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+}
+
+function inputToNumber(input: string) {
+	const chars = {
+		"€": "",
+		"۰": "0",
+		"۱": "1",
+		"۲": "2",
+		"۳": "3",
+		"۴": "4",
+		"۵": "5",
+		"۶": "6",
+		"۷": "7",
+		"۸": "8",
+		"۹": "9"
+	}
+
+	return Number(input.replace(/[€۰۱۲۳۴۵۶۷۸۹]/g, m => chars[m]).trim())
 }
