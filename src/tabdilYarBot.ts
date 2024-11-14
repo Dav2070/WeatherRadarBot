@@ -427,7 +427,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 			break
 		case "moneyReceived":
-			ctx.reply("Please enter the amount of Rial that you received.")
+			ctx.reply(userState.lang.moneyReceivedInputAmountMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -443,11 +443,13 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 
 			ctx.reply(
-				"Did you receive *{0}* Rial? Please make sure the amount is correct\\.\n\nIf the amount is correct, please send `confirm` in the chat\\. If not, please enter the correct different value\\.".replace(
+				userState.lang.moneyReceivedInputAmountConfirmationMessage.replace(
 					"{0}",
 					numberWithCommas(moneyReceivedAmount)
 				),
-				{ parse_mode: "MarkdownV2" }
+				{
+					parse_mode: "MarkdownV2"
+				}
 			)
 
 			userState.inputs.moneyReceivedInputAmount = moneyReceivedAmount
@@ -494,7 +496,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				})
 
 				ctx.reply(
-					"Thank you for confirming the amount\\! We will notify your partner to send the remaining *{0} Rial*, please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.\n\nYou will receive the money from the following bank account:\n*{1}*"
+					userState.lang.moneyReceivedSendRemainingAmountMessage
 						.replace("{0}", numberWithCommas(remainingAmount))
 						.replace(
 							"{1}",
@@ -523,7 +525,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				// Send message to the partner
 				tabdilYarTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
-					"Hey there 👋 It seems you didn't send the correct amount to the bank account of your partner\\. Please send the remaining `{0}` Rial to the following bank account\\. When you have done that and your partner has confirmed that he has received the money, we will send *{1} €* to your bank account\\.\n\n`{2}`"
+					userState.lang.moneyReceivedSendRemainingAmountPartnerMessage
 						.replace("{0}", numberWithCommas(remainingAmount))
 						.replace(
 							"{1}",

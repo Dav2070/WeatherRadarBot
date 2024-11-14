@@ -31,9 +31,17 @@ export const en = {
 		"We successfully connected you with your partner!\n\nNow please enter the bank account details, where you want to send the money.",
 	moneyReceivedConfirmSuccessMessage:
 		"Thank you for the confirmation! We will now send your money to your partner.\n\nThis is the end of this transaction, you don't have to do anything more. If you want to use this bot again, type /start.",
+	moneyReceivedInputAmountMessage:
+		"Please enter the amount of Rial that you received.",
+	moneyReceivedInputAmountConfirmationMessage:
+		"Did you receive *{0}* Rial? Please make sure the amount is correct\\.\n\nIf the amount is correct, please send `confirm` in the chat\\. If not, please enter the correct different value\\.",
 	moneyReceivedConfirmPartnerMessage:
 		"Your partner has confirmed that he received your money\\. Your european bank account will receive *{0} €* within the next few days\\.\n\nThis is the end of the transaction\\. Thank you for using this bot\\! If you want to start a new transaction, type /start\\.",
 	moneyReceivedIncorrectInputMessage: "Incorrect input, please try it again.",
+	moneyReceivedSendRemainingAmountMessage:
+		"Thank you for confirming the amount\\! We will notify your partner to send the remaining *{0} Rial*, please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.\n\nYou will receive the money from the following bank account:\n*{1}*",
+	moneyReceivedSendRemainingAmountPartnerMessage:
+		"Hey there 👋 It seems you didn't send the correct amount to the bank account of your partner\\. Please send the remaining `{0}` Rial to the following bank account\\. When you have done that and your partner has confirmed that he has received the money, we will send *{1} €* to your bank account\\.\n\n`{2}`",
 	adminStartMessage:
 		"Available admin commands:\n/admin\n/adminEuroReceived\n/adminEuroReceivedIncorrectAmount",
 	adminEuroReceivedMessage:
@@ -93,10 +101,14 @@ export const fa = {
 		"ما با موفقیت شما را به خریدار متصل کردیم!\n\nاکنون لطفاً حساب پی پالی را که می‌خواهید پول به آن ارسال شود وارد کنید.",
 	moneyReceivedConfirmSuccessMessage:
 		"با تشکر از تأیید شما! اکنون معادل یورویی را به خریدار ارسال خواهیم کرد.\n\nتراکنش با موفقیت به پایان رسید، شما نیازی به انجام کار دیگری ندارید. اگر می‌خواهید دوباره از این ربات استفاده کنید، /start را تایپ کنید.",
+	moneyReceivedInputAmountMessage: "",
+	moneyReceivedInputAmountConfirmationMessage: "",
 	moneyReceivedConfirmPartnerMessage:
 		"فروشنده تأیید کرده است که معادل ریالی را دریافت کرده است\\. حساب پی پال شما طی چند روز آینده *{0} یورو* دریافت خواهد کرد\\.\n\nاین تراکنش با موفقیت به پایان رسید\\. از همراهی شما متشکریم\\! اگر می‌خواهید یک معامله جدید را شروع کنید، /start را تایپ کنید\\.",
 	moneyReceivedIncorrectInputMessage:
 		"ورودی نادرست است، لطفاً دوباره تلاش کنید.",
+	moneyReceivedSendRemainingAmountMessage: "",
+	moneyReceivedSendRemainingAmountPartnerMessage: "",
 	adminStartMessage:
 		"دستورات مدیر موجود:\n/admin\n/adminEuroReceived\n/adminEuroReceivedIncorrectAmount",
 	adminEuroReceivedMessage: "کد شریک را برای ارسال پیام دریافت پول وارد کنید.",
