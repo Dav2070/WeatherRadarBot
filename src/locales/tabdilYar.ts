@@ -22,9 +22,11 @@ export const en = {
 		"Please enter the details of your iranian bank account, where you want to send the money to.",
 	inputEuroUserBankAccountDetailsSuccessMessage:
 		"Alright, we created a partner code for you\\. Please send this code to your partner, so we can connect you two\\.\n\n`{0}`\n\nYou will receive a message with the next step when your partner has connected using your code\\.",
-	inputRialUserBankAccountDetailsSuccessMessage:
+	inputRialUserTargetBankAccountDetailsSuccessMessage:
+		"Thank you! Now please enter your iranian bank account details from where you will send the money to your partner. We will show this to your partner, so he can recognize which transaction is coming from you.",
+	inputRialUserOriginBankAccountDetailsSuccessMessage:
 		"Thank you! You will receive a message when the money will be sent to your bank account.",
-	inputRialUserBankAccountDetailsPartnerMessage:
+	inputRialUserOriginBankAccountDetailsPartnerMessage:
 		"Your partner has successfully connected using your code\\!\n\nNow, please send `{0}` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/{0}EUR)",
 	inputPartnerCodeNoPartnerFoundMessage:
 		"No partner with this code found. Please enter a different code or start again using /start",
@@ -93,9 +95,10 @@ export const fa = {
 		"لطفاً شماره کارت بانکی ایرانی خود را که می‌خواهید ریال به آن ارسال شود را وارد کنید.",
 	inputEuroUserBankAccountDetailsSuccessMessage:
 		"خوب، ما یک کد شریک برای شما ایجاد کردیم\\. لطفاً این کد را به شریک خود ارسال کنید تا بتوانیم شما را به یکدیگر متصل کنیم\\.\n\n`{0}`\n\nهنگامی که شریک شما با استفاده از کد شما ارتباط برقرار کند، پیامی با مرحله بعدی دریافت خواهید کرد\\.",
-	inputRialUserBankAccountDetailsSuccessMessage:
+	inputRialUserTargetBankAccountDetailsSuccessMessage: "",
+	inputRialUserOriginBankAccountDetailsSuccessMessage:
 		"با تشکر! شما پیامی دریافت خواهید کرد که پول به حساب بانکی شما ارسال می‌شود.",
-	inputRialUserBankAccountDetailsPartnerMessage:
+	inputRialUserOriginBankAccountDetailsPartnerMessage:
 		"خریدار شما با موفقیت با استفاده از کد شما به سامانه متصل شده است\\!\n\nاکنون لطفاً `{0}` یورو به حساب PayPal زیر ارسال کنید\\.\n*مهم*: حتماً کد شریک را در معامله ارسال کنید تا بدانیم پول متعلق به شماست\\.\n\nپیامی درباره مرحله بعدی پس از دریافت پول ارسال خواهیم کرد\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/{0}EUR)",
 	inputPartnerCodeNoPartnerFoundMessage:
 		"فروشنده ای با این کد پیدا نشد. لطفاً کد دیگری وارد کنید یا دوباره با استفاده از /start شروع کنید.",

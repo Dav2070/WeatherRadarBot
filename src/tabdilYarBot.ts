@@ -25,7 +25,8 @@ type UserContext =
 	| "euroToRialSelected"
 	| "inputAmount"
 	| "inputEuroUserBankAccountDetails"
-	| "inputRialUserBankAccountDetails"
+	| "inputRialUserTargetBankAccountDetails"
+	| "inputRialUserOriginBankAccountDetails"
 	| "inputPartnerCode"
 	| "waitForPartnerToConnect"
 	| "moneyReceived"
@@ -365,23 +366,49 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				"waitForPartnerToConnect"
 			)
 			break
-		case "inputRialUserBankAccountDetails":
+		case "inputRialUserTargetBankAccountDetails":
 			let europeanBankAccountData = ctx.message.text as string
 
-			if (ctx.message.text.length < 5) {
+			if (europeanBankAccountData.length < 5) {
 				ctx.reply(userState.lang.bankAccountInvalid)
 				break
 			}
 
 			// Update partner in the database
 			userState.partner = await prisma.rialTunnelBotPartner.update({
-				where: { id: userState.partner?.id },
+				where: { id: userState.partner.id },
 				data: {
 					userRialTargetBankAccountData: europeanBankAccountData
 				}
 			})
 
-			ctx.reply(userState.lang.inputRialUserBankAccountDetailsSuccessMessage)
+			ctx.reply(userState.lang.inputRialUserTargetBankAccountDetailsSuccessMessage)
+
+			await setContext(
+				userState.rialTunnelBotUser,
+				"inputRialUserOriginBankAccountDetails"
+			)
+
+			break
+		case "inputRialUserOriginBankAccountDetails":
+			let originEuropeanBankAccountData = ctx.message.text as string
+
+			if (originEuropeanBankAccountData.length < 5) {
+				ctx.reply(userState.lang.bankAccountInvalid)
+				break
+			}
+
+			// Update partner in the database
+			userState.partner = await prisma.rialTunnelBotPartner.update({
+				where: { id: userState.partner.id },
+				data: {
+					userRialOriginBankAccountData: originEuropeanBankAccountData
+				}
+			})
+
+			ctx.reply(
+				userState.lang.inputRialUserOriginBankAccountDetailsSuccessMessage
+			)
 
 			// Send message to other user that the partner connected successfully
 			let user = await prisma.user.findFirst({
@@ -397,7 +424,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				userState.lang.inputRialUserBankAccountDetailsPartnerMessage.replaceAll(
+				userState.lang.inputRialUserOriginBankAccountDetailsPartnerMessage.replaceAll(
 					"{0}",
 					formattedAmount
 				),
@@ -426,7 +453,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 				await setContext(
 					userState.rialTunnelBotUser,
-					"inputRialUserBankAccountDetails"
+					"inputRialUserTargetBankAccountDetails"
 				)
 			}
 			break
