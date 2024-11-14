@@ -25,21 +25,23 @@ model User {
 }
 
 model RialTunnelBotPartner {
-  id                      BigInt   @id @default(autoincrement())
-  uuid                    String   @unique @default(uuid()) @db.VarChar
-  userEuroId              BigInt
-  userRialId              BigInt?
-  amountEUR               Int?
-  amountIRR               Int?
-  userEuroBankAccountData String?  @db.VarChar
-  userRialBankAccountData String?  @db.VarChar
-  euroReceived            Boolean  @default(false) // If true, the european user has sent the amount to the PayPal account
-  rialReceived            Boolean  @default(false) // If true, the iranian user has sent the amount to the iranian bank account of the partner
-  completed               Boolean  @default(false) // If true, the entire transaction is completed
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @default(now()) @updatedAt
-  userEuro                User     @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
-  userRial                User?    @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
+  id                            BigInt   @id @default(autoincrement())
+  uuid                          String   @unique @default(uuid()) @db.VarChar
+  userEuroId                    BigInt
+  userRialId                    BigInt?
+  amountEUR                     Int?
+  amountIRR                     Int?
+  userEuroBankAccountData       String?  @db.VarChar
+  userRialOriginBankAccountData String?  @db.VarChar
+  userRialTargetBankAccountData String?  @db.VarChar
+  euroReceived                  Boolean  @default(false) // If true, the european user has sent the amount to the PayPal account
+  rialReceived                  Boolean  @default(false) // If true, the iranian user has sent the amount to the iranian bank account of the partner
+  remainingAmountRial           Int?
+  completed                     Boolean  @default(false) // If true, the entire transaction is completed
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @default(now()) @updatedAt
+  userEuro                      User     @relation(fields: [userEuroId], references: [id], name: "rialTunnelBotEuroPartners")
+  userRial                      User?    @relation(fields: [userRialId], references: [id], name: "rialTunnelBotRialPartners")
 }
 
 model RialTunnelBotUser {
