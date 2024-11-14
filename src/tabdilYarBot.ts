@@ -494,7 +494,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				})
 
 				ctx.reply(
-					"Thank you for confirming the amount\\! We will notify your partner to send the remaining *{0}* Rial, please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.\nYou will receive the money from the following bank account:\n*{1}*"
+					"Thank you for confirming the amount\\! We will notify your partner to send the remaining *{0} Rial*, please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.\n\nYou will receive the money from the following bank account:\n*{1}*"
 						.replace("{0}", numberWithCommas(remainingAmount))
 						.replace(
 							"{1}",
@@ -516,7 +516,24 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					}
 				)
 
-				// TODO: Send message to the partner
+				let iranUser = await prisma.user.findFirst({
+					where: { id: userState.partner.userRialId }
+				})
+
+				// Send message to the partner
+				tabdilYarTelegraf.telegram.sendMessage(
+					iranUser.chatId.toString(),
+					"Hey there 👋 It seems you didn't send the correct amount to the bank account of your partner\\. Please send the remaining `{0}` Rial to the following bank account\\. When you have done that and your partner has confirmed that he has received the money, we will send *{1} €* to your bank account\\.\n\n`{2}`"
+						.replace("{0}", numberWithCommas(remainingAmount))
+						.replace(
+							"{1}",
+							((userState.partner.amountEUR / 100) * (1 - commission))
+								.toFixed(2)
+								.replace(".", "\\.")
+						)
+						.replace("{2}", userState.partner.userEuroBankAccountData),
+					{ parse_mode: "MarkdownV2" }
+				)
 			} else {
 				ctx.reply(userState.lang.moneyReceivedConfirmSuccessMessage)
 
@@ -575,7 +592,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 						data: { euroReceived: true }
 					})
 
-					ctx.sendMessage(userState.lang.partnerUpdatedMessage)
+					ctx.reply(userState.lang.partnerUpdatedMessage)
 
 					// Send next message to the user in EU
 					let euUser = await prisma.user.findFirst({
