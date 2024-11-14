@@ -24,8 +24,8 @@ type UserContext =
 	| "rialToEuroSelected"
 	| "euroToRialSelected"
 	| "inputAmount"
-	| "inputIranianBankAccountDetails"
-	| "inputEuropeanBankAccountDetails"
+	| "inputEuroUserBankAccountDetails"
+	| "inputRialUserBankAccountDetails"
 	| "inputPartnerCode"
 	| "waitForPartnerToConnect"
 	| "moneyReceived"
@@ -334,14 +334,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(userState.lang.inputIranianBankAccountDetailsMessage)
+			ctx.reply(userState.lang.inputEuroUserBankAccountDetailsMessage)
 
 			await setContext(
 				userState.rialTunnelBotUser,
-				"inputIranianBankAccountDetails"
+				"inputEuroUserBankAccountDetails"
 			)
 			break
-		case "inputIranianBankAccountDetails":
+		case "inputEuroUserBankAccountDetails":
 			let iranianBankAccountData = ctx.message.text as string
 			if (ctx.message.text.length < 5) break
 
@@ -354,7 +354,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			ctx.replyWithMarkdownV2(
-				userState.lang.inputIranianBankAccountDetailsSuccessMessage.replace(
+				userState.lang.inputEuroUserBankAccountDetailsSuccessMessage.replace(
 					"{0}",
 					userState.partner.uuid
 				)
@@ -365,9 +365,13 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				"waitForPartnerToConnect"
 			)
 			break
-		case "inputEuropeanBankAccountDetails":
+		case "inputRialUserBankAccountDetails":
 			let europeanBankAccountData = ctx.message.text as string
-			if (ctx.message.text.length < 5) break
+
+			if (ctx.message.text.length < 5) {
+				ctx.reply(userState.lang.bankAccountInvalid)
+				break
+			}
 
 			// Update partner in the database
 			userState.partner = await prisma.rialTunnelBotPartner.update({
@@ -377,7 +381,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(userState.lang.inputEuropeanBankAccountDetailsSuccessMessage)
+			ctx.reply(userState.lang.inputRialUserBankAccountDetailsSuccessMessage)
 
 			// Send message to other user that the partner connected successfully
 			let user = await prisma.user.findFirst({
@@ -393,7 +397,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				userState.lang.inputEuropeanBankAccountDetailsPartnerMessage.replaceAll(
+				userState.lang.inputRialUserBankAccountDetailsPartnerMessage.replaceAll(
 					"{0}",
 					formattedAmount
 				),
@@ -422,7 +426,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 				await setContext(
 					userState.rialTunnelBotUser,
-					"inputEuropeanBankAccountDetails"
+					"inputRialUserBankAccountDetails"
 				)
 			}
 			break
