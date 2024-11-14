@@ -45,6 +45,7 @@ interface UserState {
 	lang: typeof en
 	inputs: {
 		adminEuroReceivedIncorrectAmountPartner: RialTunnelBotPartner
+		moneyReceivedInputAmount: number
 	}
 }
 
@@ -279,7 +280,8 @@ async function init(ctx: Context<any>) {
 		partner,
 		lang: rialTunnelBotUser.lang == "en" ? en : fa,
 		inputs: {
-			adminEuroReceivedIncorrectAmountPartner: null
+			adminEuroReceivedIncorrectAmountPartner: null,
+			moneyReceivedInputAmount: 0
 		}
 	}
 }
@@ -371,7 +373,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			userState.partner = await prisma.rialTunnelBotPartner.update({
 				where: { id: userState.partner?.id },
 				data: {
-					userRialBankAccountData: europeanBankAccountData
+					userRialTargetBankAccountData: europeanBankAccountData
 				}
 			})
 
@@ -448,6 +450,8 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				{ parse_mode: "MarkdownV2" }
 			)
 
+			userState.inputs.moneyReceivedInputAmount = moneyReceivedAmount
+
 			await setContext(userState.rialTunnelBotUser, "moneyReceivedConfirm")
 			break
 		case "moneyReceivedConfirm":
@@ -456,16 +460,71 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				.trim()
 
 			if (
-				moneyReceivedCheckInput == "confirm" ||
-				moneyReceivedCheckInput == "تایید"
+				moneyReceivedCheckInput != "confirm" &&
+				moneyReceivedCheckInput != "تایید"
 			) {
+				ctx.reply(userState.lang.moneyReceivedIncorrectInputMessage)
+				break
+			}
+
+			// Check if the amount is correct
+			let expectedMoneyReceivedAmount = userState.partner.remainingAmountRial
+
+			if (expectedMoneyReceivedAmount == null) {
+				expectedMoneyReceivedAmount = Math.floor(
+					userState.partner.amountIRR * (1 - commission)
+				)
+			}
+
+			if (
+				userState.inputs.moneyReceivedInputAmount <
+				expectedMoneyReceivedAmount
+			) {
+				let remainingAmount =
+					expectedMoneyReceivedAmount -
+					userState.inputs.moneyReceivedInputAmount
+
+				userState.partner = await prisma.rialTunnelBotPartner.update({
+					where: {
+						id: userState.partner.id
+					},
+					data: {
+						remainingAmountRial: remainingAmount
+					}
+				})
+
+				ctx.reply(
+					"Thank you for confirming the amount\\! We will notify your partner to send the remaining *{0}* Rial, please check your bank account regularly and let us know when your iranian bank has received the money by clicking the button below\\.\nYou will receive the money from the following bank account:\n*{1}*"
+						.replace("{0}", numberWithCommas(remainingAmount))
+						.replace(
+							"{1}",
+							userState.partner.userRialOriginBankAccountData
+						),
+					{
+						parse_mode: "MarkdownV2",
+						reply_markup: {
+							inline_keyboard: [
+								[
+									Markup.button.callback(
+										userState.lang
+											.adminEuroReceivedEuroPartnerMessageMoneyReceived,
+										"moneyReceived"
+									)
+								]
+							]
+						}
+					}
+				)
+
+				// TODO: Send message to the partner
+			} else {
 				ctx.reply(userState.lang.moneyReceivedConfirmSuccessMessage)
 
 				await setContext(userState.rialTunnelBotUser, null)
 
 				userState.partner = await prisma.rialTunnelBotPartner.update({
 					where: { id: userState.partner.id },
-					data: { rialReceived: true }
+					data: { rialReceived: true, remainingAmountRial: 0 }
 				})
 
 				// Send message to the other user
@@ -483,8 +542,6 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					),
 					{ parse_mode: "MarkdownV2" }
 				)
-			} else {
-				ctx.reply(userState.lang.moneyReceivedIncorrectInputMessage)
 			}
 
 			break
@@ -539,6 +596,10 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 								numberWithCommas(
 									Math.floor(adminPartner.amountIRR * (1 - commission))
 								)
+							)
+							.replace(
+								"{2}",
+								adminPartner.userRialOriginBankAccountData
 							),
 						{
 							parse_mode: "MarkdownV2",
