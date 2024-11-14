@@ -30,7 +30,6 @@ type UserContext =
 	| "inputPartnerCode"
 	| "waitForPartnerToConnect"
 	| "moneyReceived"
-	| "moneyReceivedInputAmount"
 	| "moneyReceivedConfirm"
 	| "adminStart"
 	| "adminEuroReceived"
@@ -382,7 +381,9 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				}
 			})
 
-			ctx.reply(userState.lang.inputRialUserTargetBankAccountDetailsSuccessMessage)
+			ctx.reply(
+				userState.lang.inputRialUserTargetBankAccountDetailsSuccessMessage
+			)
 
 			await setContext(
 				userState.rialTunnelBotUser,
@@ -460,31 +461,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 		case "moneyReceived":
 			ctx.reply(userState.lang.moneyReceivedInputAmountMessage)
 
-			await setContext(
-				userState.rialTunnelBotUser,
-				"moneyReceivedInputAmount"
-			)
-			break
-		case "moneyReceivedInputAmount":
-			let moneyReceivedAmount = inputToNumber(ctx.message.text as string)
-
-			if (isNaN(moneyReceivedAmount) || moneyReceivedAmount <= 0) {
-				ctx.reply(userState.lang.inputAmount.amountInvalid)
-				break
-			}
-
-			ctx.reply(
-				userState.lang.moneyReceivedInputAmountConfirmationMessage.replace(
-					"{0}",
-					numberWithCommas(moneyReceivedAmount)
-				),
-				{
-					parse_mode: "MarkdownV2"
-				}
-			)
-
-			userState.inputs.moneyReceivedInputAmount = moneyReceivedAmount
-
+			userState.inputs.moneyReceivedInputAmount = 0
 			await setContext(userState.rialTunnelBotUser, "moneyReceivedConfirm")
 			break
 		case "moneyReceivedConfirm":
@@ -493,10 +470,26 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				.trim()
 
 			if (
-				moneyReceivedCheckInput != "confirm" &&
-				moneyReceivedCheckInput != "تایید"
+				(moneyReceivedCheckInput != "confirm" &&
+					moneyReceivedCheckInput != "تایید") ||
+				userState.inputs.moneyReceivedInputAmount == 0
 			) {
-				ctx.reply(userState.lang.moneyReceivedIncorrectInputMessage)
+				let moneyReceivedAmount = inputToNumber(moneyReceivedCheckInput)
+
+				if (isNaN(moneyReceivedAmount) || moneyReceivedAmount <= 0) {
+					ctx.reply(userState.lang.inputAmount.amountInvalid)
+				} else {
+					ctx.reply(
+						userState.lang.moneyReceivedInputAmountConfirmationMessage.replace(
+							"{0}",
+							numberWithCommas(moneyReceivedAmount)
+						),
+						{ parse_mode: "MarkdownV2" }
+					)
+
+					userState.inputs.moneyReceivedInputAmount = moneyReceivedAmount
+				}
+
 				break
 			}
 
