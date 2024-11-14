@@ -25,7 +25,7 @@ export const en = {
 	inputRialUserTargetBankAccountDetailsSuccessMessage:
 		"Thank you! Now please enter your iranian bank account details from where you will send the money to your partner. We will show this to your partner, so he can recognize which transaction is coming from you.",
 	inputRialUserOriginBankAccountDetailsSuccessMessage:
-		"Thank you! You will receive a message when the money will be sent to your bank account.",
+		"Thank you! You will receive a message with the next step when your partner has sent the money to us.",
 	inputRialUserOriginBankAccountDetailsPartnerMessage:
 		"Your partner has successfully connected using your code\\!\n\nNow, please send `{0}` € to the following PayPal account\\.\n*Important*: Make sure to send the partner code in the transaction, so that we know the money belongs to you\\.\n\nWe will send you a message of the next step when we have received the money\\.\n\n[paypal\\.me/tabdilyar](https://paypal.me/tabdilyar/{0}EUR)",
 	inputPartnerCodeNoPartnerFoundMessage:
@@ -90,12 +90,13 @@ export const fa = {
 		amountInvalid: "مقدار نامعتبر است",
 		amountTooLow: "حداقل میزان برای انجام تراکنش 10 یورو می باشد."
 	},
-	bankAccountInvalid: "",
+	bankAccountInvalid: "اطلاعات حساب بانکی شما نامعتبر است.",
 	inputEuroUserBankAccountDetailsMessage:
 		"لطفاً شماره کارت بانکی ایرانی خود را که می‌خواهید ریال به آن ارسال شود را وارد کنید.",
 	inputEuroUserBankAccountDetailsSuccessMessage:
 		"خوب، ما یک کد شریک برای شما ایجاد کردیم\\. لطفاً این کد را به شریک خود ارسال کنید تا بتوانیم شما را به یکدیگر متصل کنیم\\.\n\n`{0}`\n\nهنگامی که شریک شما با استفاده از کد شما ارتباط برقرار کند، پیامی با مرحله بعدی دریافت خواهید کرد\\.",
-	inputRialUserTargetBankAccountDetailsSuccessMessage: "",
+	inputRialUserTargetBankAccountDetailsSuccessMessage:
+		"متشکریم! لطفاً اکنون جزئیات حساب بانکی ایرانی خود را وارد کنید که از آنجا پول را به شریک خود ارسال خواهید کرد. ما این را به شریک شما نشان می‌دهیم تا او بتواند تشخیص دهد کدام تراکنش از طرف شما آمده است.",
 	inputRialUserOriginBankAccountDetailsSuccessMessage:
 		"با تشکر! شما پیامی دریافت خواهید کرد که پول به حساب بانکی شما ارسال می‌شود.",
 	inputRialUserOriginBankAccountDetailsPartnerMessage:
@@ -106,14 +107,18 @@ export const fa = {
 		"ما با موفقیت شما را به خریدار متصل کردیم!\n\nاکنون لطفاً حساب پی پالی را که می‌خواهید پول به آن ارسال شود وارد کنید.",
 	moneyReceivedConfirmSuccessMessage:
 		"با تشکر از تأیید شما! اکنون معادل یورویی را به خریدار ارسال خواهیم کرد.\n\nتراکنش با موفقیت به پایان رسید، شما نیازی به انجام کار دیگری ندارید. اگر می‌خواهید دوباره از این ربات استفاده کنید، /start را تایپ کنید.",
-	moneyReceivedInputAmountMessage: "",
-	moneyReceivedInputAmountConfirmationMessage: "",
+	moneyReceivedInputAmountMessage:
+		"لطفاً مقدار ریالی که دریافت کرده‌اید را وارد کنید.",
+	moneyReceivedInputAmountConfirmationMessage:
+		"آیا *{0}* ریال دریافت کرده‌اید؟ لطفاً از صحیح بودن مبلغ اطمینان حاصل کنید\\.\n\nاگر مبلغ صحیح است، لطفاً `تایید` را در چت ارسال کنید\\. در غیر این صورت، لطفاً مبلغ صحیح را وارد کنید\\.",
 	moneyReceivedConfirmPartnerMessage:
 		"فروشنده تأیید کرده است که معادل ریالی را دریافت کرده است\\. حساب پی پال شما طی چند روز آینده *{0} یورو* دریافت خواهد کرد\\.\n\nاین تراکنش با موفقیت به پایان رسید\\. از همراهی شما متشکریم\\! اگر می‌خواهید یک معامله جدید را شروع کنید، /start را تایپ کنید\\.",
 	moneyReceivedIncorrectInputMessage:
 		"ورودی نادرست است، لطفاً دوباره تلاش کنید.",
-	moneyReceivedSendRemainingAmountMessage: "",
-	moneyReceivedSendRemainingAmountPartnerMessage: "",
+	moneyReceivedSendRemainingAmountMessage:
+		"از تأیید مبلغ متشکریم\\! به شریک شما اطلاع خواهیم داد که *{0} ریال* باقی‌مانده را ارسال کند، لطفاً حساب بانکی خود را به‌طور منظم بررسی کنید و زمانی که بانک ایرانی شما پول را دریافت کرد، با کلیک بر روی دکمه زیر به ما اطلاع دهید\\.\n\nشما پول را از حساب بانکی زیر دریافت خواهید کرد:\n*{1}*",
+	moneyReceivedSendRemainingAmountPartnerMessage:
+		"سلام 👋 به نظر می‌رسد که مبلغ صحیحی به حساب بانکی شریک خود واریز نکرده‌اید\\. لطفاً *{0}* ریال باقی‌مانده را به حساب بانکی زیر واریز کنید\\. هنگامی که این کار را انجام دادید و شریک شما تأیید کرد که پول را دریافت کرده است، ما *{1} €* را به حساب بانکی شما ارسال خواهیم کرد\\.\n\n`{2}`",
 	adminStartMessage:
 		"دستورات مدیر موجود:\n/admin\n/adminEuroReceived\n/adminEuroReceivedIncorrectAmount",
 	adminEuroReceivedMessage: "کد شریک را برای ارسال پیام دریافت پول وارد کنید.",
