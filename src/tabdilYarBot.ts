@@ -323,6 +323,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			// Save the amount
 			let exchangeRate = await getRialExchangeRate()
+			let rial = amount * exchangeRate
 
 			userState.partner = await prisma.rialTunnelBotPartner.update({
 				where: {
@@ -330,7 +331,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				},
 				data: {
 					amountEUR: amount * 100,
-					amountIRR: amount * exchangeRate
+					amountIRR: Math.round(rial / 1000) * 1000
 				}
 			})
 
