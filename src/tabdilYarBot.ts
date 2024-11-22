@@ -10,7 +10,8 @@ import { JSDOM } from "jsdom"
 import { en, fa } from "./locales/tabdilYar.js"
 
 const prisma = new PrismaClient()
-const commission = 0.025
+//const commission = 0.025
+const commission = 0.01
 
 export const tabdilYarTelegraf = new Telegraf(
 	process.env.TABDIL_YAR_BOT_TOKEN ?? ""
