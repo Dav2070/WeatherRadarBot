@@ -356,9 +356,11 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			})
 
 			ctx.replyWithMarkdownV2(
-				userState.lang.inputEuroUserBankAccountDetailsSuccessMessage.replace(
-					"{0}",
-					userState.partner.uuid
+				escapeString(
+					userState.lang.inputEuroUserBankAccountDetailsSuccessMessage.replace(
+						"{0}",
+						userState.partner.uuid
+					)
 				)
 			)
 
@@ -421,15 +423,15 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			let formattedAmount = (
 				(userState.partner.amountEUR / 100) *
 				(1 + commission)
-			)
-				.toFixed(2)
-				.replace(".", "\\.")
+			).toFixed(2)
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user.chatId.toString(),
-				userState.lang.inputRialUserOriginBankAccountDetailsPartnerMessage.replaceAll(
-					"{0}",
-					formattedAmount
+				escapeString(
+					userState.lang.inputRialUserOriginBankAccountDetailsPartnerMessage.replaceAll(
+						"{0}",
+						formattedAmount
+					)
 				),
 				{ parse_mode: "MarkdownV2" }
 			)
@@ -482,9 +484,11 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 					ctx.reply(userState.lang.inputAmount.amountInvalid)
 				} else {
 					ctx.reply(
-						userState.lang.moneyReceivedInputAmountConfirmationMessage.replace(
-							"{0}",
-							numberWithCommas(moneyReceivedAmount)
+						escapeString(
+							userState.lang.moneyReceivedInputAmountConfirmationMessage.replace(
+								"{0}",
+								numberWithCommas(moneyReceivedAmount)
+							)
 						),
 						{ parse_mode: "MarkdownV2" }
 					)
@@ -522,12 +526,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				})
 
 				ctx.reply(
-					userState.lang.moneyReceivedSendRemainingAmountMessage
-						.replace("{0}", numberWithCommas(remainingAmount))
-						.replace(
-							"{1}",
-							userState.partner.userRialOriginBankAccountData
-						),
+					escapeString(
+						userState.lang.moneyReceivedSendRemainingAmountMessage
+							.replace("{0}", numberWithCommas(remainingAmount))
+							.replace(
+								"{1}",
+								userState.partner.userRialOriginBankAccountData
+							)
+					),
 					{
 						parse_mode: "MarkdownV2",
 						reply_markup: {
@@ -551,15 +557,18 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 				// Send message to the partner
 				tabdilYarTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
-					userState.lang.moneyReceivedSendRemainingAmountPartnerMessage
-						.replace("{0}", numberWithCommas(remainingAmount))
-						.replace(
-							"{1}",
-							((userState.partner.amountEUR / 100) * (1 - commission))
-								.toFixed(2)
-								.replace(".", "\\.")
-						)
-						.replace("{2}", userState.partner.userEuroBankAccountData),
+					escapeString(
+						userState.lang.moneyReceivedSendRemainingAmountPartnerMessage
+							.replace("{0}", numberWithCommas(remainingAmount))
+							.replace(
+								"{1}",
+								(
+									(userState.partner.amountEUR / 100) *
+									(1 - commission)
+								).toFixed(2)
+							)
+							.replace("{2}", userState.partner.userEuroBankAccountData)
+					),
 					{ parse_mode: "MarkdownV2" }
 				)
 			} else {
@@ -579,11 +588,14 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 				tabdilYarTelegraf.telegram.sendMessage(
 					iranUser.chatId.toString(),
-					userState.lang.moneyReceivedConfirmPartnerMessage.replace(
-						"{0}",
-						((userState.partner.amountEUR / 100) * (1 - commission))
-							.toFixed(2)
-							.replace(".", "\\.")
+					escapeString(
+						userState.lang.moneyReceivedConfirmPartnerMessage.replace(
+							"{0}",
+							(
+								(userState.partner.amountEUR / 100) *
+								(1 - commission)
+							).toFixed(2)
+						)
 					),
 					{ parse_mode: "MarkdownV2" }
 				)
@@ -629,23 +641,28 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					tabdilYarTelegraf.telegram.sendMessage(
 						euUser.chatId.toString(),
-						userState.lang.adminEuroReceivedEuroPartnerMessage
-							.replace(
-								"{0}",
-								((adminPartner.amountEUR / 100) * (1 + commission))
-									.toFixed(2)
-									.replace(".", "\\.")
-							)
-							.replace(
-								"{1}",
-								numberWithCommas(
-									Math.floor(adminPartner.amountIRR * (1 - commission))
+						escapeString(
+							userState.lang.adminEuroReceivedEuroPartnerMessage
+								.replace(
+									"{0}",
+									(
+										(adminPartner.amountEUR / 100) *
+										(1 + commission)
+									).toFixed(2)
 								)
-							)
-							.replace(
-								"{2}",
-								adminPartner.userRialOriginBankAccountData
-							),
+								.replace(
+									"{1}",
+									numberWithCommas(
+										Math.floor(
+											adminPartner.amountIRR * (1 - commission)
+										)
+									)
+								)
+								.replace(
+									"{2}",
+									adminPartner.userRialOriginBankAccountData
+								)
+						),
 						{
 							parse_mode: "MarkdownV2",
 							reply_markup: {
@@ -669,20 +686,25 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 					tabdilYarTelegraf.telegram.sendMessage(
 						iranUser.chatId.toString(),
-						userState.lang.adminEuroReceivedRialPartnerMessage
-							.replace(
-								"{0}",
-								numberWithCommas(
-									Math.floor(adminPartner.amountIRR * (1 - commission))
+						escapeString(
+							userState.lang.adminEuroReceivedRialPartnerMessage
+								.replace(
+									"{0}",
+									numberWithCommas(
+										Math.floor(
+											adminPartner.amountIRR * (1 - commission)
+										)
+									)
 								)
-							)
-							.replace(
-								"{1}",
-								((adminPartner.amountEUR / 100) * (1 - commission))
-									.toFixed(2)
-									.replace(".", "\\.")
-							)
-							.replace("{2}", adminPartner.userEuroBankAccountData),
+								.replace(
+									"{1}",
+									(
+										(adminPartner.amountEUR / 100) *
+										(1 - commission)
+									).toFixed(2)
+								)
+								.replace("{2}", adminPartner.userEuroBankAccountData)
+						),
 						{ parse_mode: "MarkdownV2" }
 					)
 				} catch (error) {
@@ -748,7 +770,7 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 			}
 
 			let amountDiff = Math.abs(amount2 - expectedAmount)
-			let formattedAmountDiff = amountDiff.toFixed(2).replace(".", "\\.")
+			let formattedAmountDiff = amountDiff.toFixed(2)
 
 			if (amount2 > expectedAmount) {
 				ctx.reply(
@@ -776,14 +798,15 @@ async function rialTunnelBotAction(ctx: Context<any>) {
 
 			let formattedExpectedAmount = expectedAmount
 				.toFixed(2)
-				.replace(".", "\\.")
 
 			tabdilYarTelegraf.telegram.sendMessage(
 				user2.chatId.toString(),
-				userState.lang.adminEuroReceivedIncorrectAmountPartnerMessage
-					.replace("{0}", amount2.toFixed(2).replace(".", "\\."))
-					.replace("{1}", formattedExpectedAmount)
-					.replaceAll("{2}", formattedAmountDiff),
+				escapeString(
+					userState.lang.adminEuroReceivedIncorrectAmountPartnerMessage
+						.replace("{0}", amount2.toFixed(2))
+						.replace("{1}", formattedExpectedAmount)
+						.replaceAll("{2}", formattedAmountDiff)
+				),
 				{ parse_mode: "MarkdownV2" }
 			)
 
@@ -804,12 +827,11 @@ async function showExchangeRate(ctx: Context<any>) {
 	let exchangeRateIrr = 1 / exchangeRateEur
 
 	ctx.replyWithMarkdownV2(
-		userStates[ctx.chat.id].lang.exchangeRateMessage
-			.replace("{0}", numberWithCommas(Math.floor(exchangeRateEur)))
-			.replace(
-				"{1}",
-				exchangeRateIrr.toFixed(8).toString().replace(".", "\\.")
-			)
+		escapeString(
+			userStates[ctx.chat.id].lang.exchangeRateMessage
+				.replace("{0}", numberWithCommas(Math.floor(exchangeRateEur)))
+				.replace("{1}", exchangeRateIrr.toFixed(8).toString())
+		)
 	)
 }
 
@@ -923,4 +945,11 @@ function inputToNumber(input: string) {
 	}
 
 	return Number(input.replace(/[€۰۱۲۳۴۵۶۷۸۹]/g, m => chars[m]).trim())
+}
+
+function escapeString(value: string) {
+	return value
+		.replaceAll(".", "\\.")
+		.replaceAll("!", "\\!")
+		.replaceAll("=", "\\=")
 }
